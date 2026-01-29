@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UpKeep - Your Social Universe</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary: #0a0a12;
+      --bg-secondary: #12121a;
+      --glass: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      --purple: #a855f7;
+      --purple-glow: rgba(168, 85, 247, 0.4);
+      --youtube: #ff0000;
+      --github: #ffffff;
+      --twitch: #9146ff;
+      --discord: #5865f2;
+      --strava: #fc4c02;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Starfield background */
+    .starfield {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .stars {
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(2px 2px at 20px 30px, white, transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 90px 40px, white, transparent),
+        radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 230px 80px, white, transparent),
+        radial-gradient(2px 2px at 300px 150px, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 370px 50px, white, transparent),
+        radial-gradient(2px 2px at 450px 180px, rgba(255,255,255,0.5), transparent);
+      background-size: 500px 200px;
+      animation: twinkle 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    /* Glass effect */
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 1rem 1.5rem;
+      background: rgba(10, 10, 18, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1rem;
+      box-shadow: 0 0 20px var(--purple-glow);
+    }
+
+    .logo-text {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .search-bar:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .search-bar span {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .search-bar kbd {
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Main content */
+    main {
+      padding-top: 5rem;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Constellation */
+    .constellation {
+      position: relative;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    /* Center sun (you) */
+    .sun {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), #7c3aed);
+      box-shadow:
+        0 0 60px var(--purple-glow),
+        0 0 100px rgba(168, 85, 247, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.5rem;
+      z-index: 10;
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 60px var(--purple-glow), 0 0 100px rgba(168, 85, 247, 0.2); }
+      50% { transform: scale(1.05); box-shadow: 0 0 80px var(--purple-glow), 0 0 120px rgba(168, 85, 247, 0.3); }
+    }
+
+    /* Orbital rings */
+    .orbit {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+    }
+
+    .orbit-1 { width: 200px; height: 200px; }
+    .orbit-2 { width: 320px; height: 320px; }
+    .orbit-3 { width: 440px; height: 440px; }
+
+    /* Platform orbs */
+    .platform-orb {
+      position: absolute;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .platform-orb:hover {
+      transform: scale(1.15);
+    }
+
+    .platform-orb.active {
+      box-shadow: 0 0 30px currentColor;
+    }
+
+    .platform-orb svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .platform-orb.youtube {
+      background: linear-gradient(135deg, #ff0000, #cc0000);
+      color: white;
+      top: 50%;
+      left: calc(50% + 85px);
+      transform: translateY(-50%);
+      animation-delay: 0s;
+    }
+
+    .platform-orb.github {
+      background: linear-gradient(135deg, #333, #1a1a1a);
+      color: white;
+      top: calc(50% - 70px);
+      left: calc(50% - 50px);
+      animation-delay: 1s;
+    }
+
+    .platform-orb.twitch {
+      background: linear-gradient(135deg, #9146ff, #772ce8);
+      color: white;
+      top: calc(50% + 60px);
+      left: calc(50% - 60px);
+      animation-delay: 2s;
+    }
+
+    .platform-orb.discord {
+      background: linear-gradient(135deg, #5865f2, #4752c4);
+      color: white;
+      opacity: 0.4;
+      top: calc(50% - 120px);
+      left: calc(50% + 100px);
+      animation-delay: 0.5s;
+    }
+
+    .platform-orb.strava {
+      background: linear-gradient(135deg, #fc4c02, #e34402);
+      color: white;
+      opacity: 0.4;
+      top: calc(50% + 130px);
+      left: calc(50% + 80px);
+      animation-delay: 1.5s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* Person orbs */
+    .person-orb {
+      position: absolute;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .person-orb:hover {
+      transform: scale(1.1);
+    }
+
+    .person-orb img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid;
+      object-fit: cover;
+    }
+
+    .person-orb.urgent img {
+      border-color: var(--red);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+      animation: urgent-pulse 1.5s ease-in-out infinite;
+    }
+
+    .person-orb.healthy img {
+      border-color: var(--green);
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+    }
+
+    .person-orb.warning img {
+      border-color: var(--yellow);
+      box-shadow: 0 0 15px rgba(234, 179, 8, 0.3);
+    }
+
+    @keyframes urgent-pulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+      50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); }
+    }
+
+    .person-orb .alert-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 16px;
+      height: 16px;
+      background: var(--red);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      animation: bounce 1s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    .person-orb .tooltip {
+      position: absolute;
+      bottom: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      background: rgba(20, 20, 30, 0.95);
+      border: 1px solid var(--glass-border);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 20;
+    }
+
+    .person-orb:hover .tooltip {
+      opacity: 1;
+    }
+
+    .tooltip-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .tooltip-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .tooltip-overdue {
+      font-size: 0.75rem;
+      color: var(--red);
+      margin-top: 2px;
+    }
+
+    /* Position people around orbits */
+    .person-orb:nth-child(1) { top: 50%; left: calc(50% - 160px); transform: translateY(-50%); }
+    .person-orb:nth-child(2) { top: calc(50% - 140px); left: calc(50% + 60px); }
+    .person-orb:nth-child(3) { top: calc(50% + 100px); left: calc(50% + 140px); }
+    .person-orb:nth-child(4) { top: calc(50% - 60px); left: calc(50% - 200px); }
+    .person-orb:nth-child(5) { top: calc(50% + 150px); left: calc(50% - 100px); }
+
+    /* Section headers */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-title .icon {
+      width: 20px;
+      height: 20px;
+      color: var(--purple);
+    }
+
+    /* Nudges */
+    .nudges {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .nudge-card {
+      padding: 1rem;
+      border-radius: 16px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      transition: all 0.3s;
+    }
+
+    .nudge-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .nudge-card.urgent {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    .nudge-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .nudge-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .nudge-info h4 {
+      font-size: 0.9375rem;
+      font-weight: 500;
+    }
+
+    .nudge-info p {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    .nudge-info .overdue {
+      color: var(--red);
+    }
+
+    .nudge-tier {
+      margin-left: auto;
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 500;
+    }
+
+    .tier-family {
+      background: rgba(168, 85, 247, 0.2);
+      color: var(--purple);
+    }
+
+    .tier-inner {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+    }
+
+    .nudge-action {
+      width: 100%;
+      padding: 0.625rem;
+      border-radius: 8px;
+      border: none;
+      background: var(--purple);
+      color: white;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .nudge-action:hover {
+      background: #9333ea;
+    }
+
+    .nudge-action.secondary {
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      color: var(--text-secondary);
+    }
+
+    .nudge-action.secondary:hover {
+      background: var(--glass);
+    }
+
+    .nudge-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .nudge-actions button {
+      flex: 1;
+    }
+
+    /* Signals */
+    .signals-section {
+      margin-top: 2rem;
+    }
+
+    .live-section {
+      margin-bottom: 2rem;
+    }
+
+    .live-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    .signal-card {
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .signal-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .signal-thumbnail {
+      position: relative;
+      aspect-ratio: 16/9;
+      background: var(--bg-secondary);
+    }
+
+    .signal-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .live-badge {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: var(--red);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .platform-badge {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .platform-badge svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .platform-badge.youtube { background: var(--youtube); }
+    .platform-badge.github { background: #333; }
+    .platform-badge.twitch { background: var(--twitch); }
+
+    .pin-button {
+      position: absolute;
+      bottom: 0.5rem;
+      right: 0.5rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.6);
+      border: none;
+      color: white;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .signal-card:hover .pin-button {
+      opacity: 1;
+    }
+
+    .pin-button:hover {
+      background: var(--purple);
+    }
+
+    .pin-button.pinned {
+      opacity: 1;
+      background: var(--purple);
+    }
+
+    .signal-content {
+      padding: 1rem;
+    }
+
+    .signal-title {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .signal-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .signal-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+    }
+
+    .signal-author {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .signal-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    /* Activity feed */
+    .activity-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 1rem;
+      border-radius: 12px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      transition: all 0.2s;
+    }
+
+    .activity-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .activity-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-text {
+      font-size: 0.875rem;
+    }
+
+    .activity-text strong {
+      color: var(--text-primary);
+    }
+
+    .activity-text span {
+      color: var(--text-secondary);
+    }
+
+    .activity-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .activity-platform {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .activity-platform svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Pinned panel */
+    .pinned-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 45%;
+      max-width: 600px;
+      background: rgba(15, 15, 25, 0.98);
+      backdrop-filter: blur(20px);
+      border-left: 1px solid var(--glass-border);
+      transform: translateX(100%);
+      transition: transform 0.3s ease-out;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pinned-panel.open {
+      transform: translateX(0);
+    }
+
+    .pinned-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .pinned-header h3 {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+      background: var(--glass);
+      color: white;
+    }
+
+    .pinned-video {
+      aspect-ratio: 16/9;
+      background: black;
+    }
+
+    .pinned-video iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .pinned-details {
+      padding: 1rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .pinned-title {
+      font-size: 1.125rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+    }
+
+    .pinned-author {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-top: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .pinned-author img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .pinned-author-name {
+      font-weight: 500;
+    }
+
+    .pinned-author-status {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    /* Search modal */
+    .search-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 300;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 15vh;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .search-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .search-container {
+      width: 90%;
+      max-width: 600px;
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+      overflow: hidden;
+      transform: scale(0.95) translateY(-20px);
+      transition: transform 0.2s;
+    }
+
+    .search-modal.open .search-container {
+      transform: scale(1) translateY(0);
+    }
+
+    .search-input-wrapper {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .search-input-wrapper svg {
+      width: 20px;
+      height: 20px;
+      color: var(--text-muted);
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 1rem;
+      color: white;
+      outline: none;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-results {
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    .search-result {
+      padding: 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .search-result:hover {
+      background: var(--glass);
+    }
+
+    .search-hint {
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    /* Person detail panel */
+    .person-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 380px;
+      background: rgba(15, 15, 25, 0.98);
+      backdrop-filter: blur(20px);
+      border-left: 1px solid var(--glass-border);
+      transform: translateX(100%);
+      transition: transform 0.3s ease-out;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .person-panel.open {
+      transform: translateX(0);
+    }
+
+    .person-profile {
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .person-profile img {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 3px solid var(--purple);
+    }
+
+    .person-name {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .person-stats {
+      padding: 0 1.5rem 1.5rem;
+    }
+
+    .stat-card {
+      padding: 1rem;
+      border-radius: 12px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .stat-value {
+      font-weight: 500;
+    }
+
+    .stat-value.good { color: var(--green); }
+    .stat-value.warning { color: var(--yellow); }
+    .stat-value.bad { color: var(--red); }
+
+    .health-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .health-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .health-fill.good { background: var(--green); }
+    .health-fill.warning { background: var(--yellow); }
+    .health-fill.bad { background: var(--red); }
+
+    .person-footer {
+      margin-top: auto;
+      padding: 1.5rem;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .log-contact-btn {
+      width: 100%;
+      padding: 0.875rem;
+      border-radius: 12px;
+      border: none;
+      background: var(--purple);
+      color: white;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .log-contact-btn:hover {
+      background: #9333ea;
+    }
+
+    .log-contact-btn.success {
+      background: var(--green);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .constellation { height: 300px; }
+      .orbit-1 { width: 150px; height: 150px; }
+      .orbit-2 { width: 240px; height: 240px; }
+      .orbit-3 { width: 330px; height: 330px; }
+      .sun { width: 60px; height: 60px; font-size: 1.25rem; }
+      .platform-orb { width: 44px; height: 44px; }
+      .platform-orb svg { width: 22px; height: 22px; }
+      .person-orb img { width: 40px; height: 40px; }
+      .search-bar span { display: none; }
+      .pinned-panel, .person-panel { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="starfield"></div>
+  <div class="stars"></div>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">U</div>
+      <span class="logo-text">UpKeep</span>
+    </div>
+
+    <div class="search-bar" onclick="openSearch()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <span>Search your network...</span>
+      <kbd>⌘K</kbd>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem;">
+      <button class="close-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      </button>
+      <button class="close-btn" onclick="window.location.href='#integrations'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <!-- Constellation -->
+      <section class="constellation">
+        <div class="orbit orbit-1"></div>
+        <div class="orbit orbit-2"></div>
+        <div class="orbit orbit-3"></div>
+
+        <div class="sun">You</div>
+
+        <!-- Platform orbs -->
+        <div class="platform-orb youtube active" onclick="togglePlatform('youtube')" title="YouTube">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </div>
+
+        <div class="platform-orb github active" onclick="togglePlatform('github')" title="GitHub">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        </div>
+
+        <div class="platform-orb twitch active" onclick="togglePlatform('twitch')" title="Twitch">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+        </div>
+
+        <div class="platform-orb discord" title="Discord (Not connected)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+        </div>
+
+        <div class="platform-orb strava" title="Strava (Not connected)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+        </div>
+
+        <!-- People orbs -->
+        <div class="person-orb urgent" onclick="showPerson('mom')">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=mom&backgroundColor=ffdfbf" alt="Mom">
+          <div class="alert-dot">!</div>
+          <div class="tooltip">
+            <div class="tooltip-name">Mom</div>
+            <div class="tooltip-status">Last: 5 days ago</div>
+            <div class="tooltip-overdue">2 days overdue</div>
+          </div>
+        </div>
+
+        <div class="person-orb healthy" onclick="showPerson('dad')">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=dad&backgroundColor=c0aede" alt="Dad">
+          <div class="tooltip">
+            <div class="tooltip-name">Dad</div>
+            <div class="tooltip-status">Last: 1 day ago</div>
+          </div>
+        </div>
+
+        <div class="person-orb warning" onclick="showPerson('bo')">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=bokim&backgroundColor=d1d4f9" alt="Bo Kim">
+          <div class="tooltip">
+            <div class="tooltip-name">Bo Kim</div>
+            <div class="tooltip-status">Last: 25 days ago</div>
+            <div class="tooltip-overdue">Due in 5 days</div>
+          </div>
+        </div>
+
+        <div class="person-orb healthy" onclick="showPerson('nana')">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=nana&backgroundColor=ffd5dc" alt="Nana">
+          <div class="tooltip">
+            <div class="tooltip-name">Nana</div>
+            <div class="tooltip-status">Last: 10 days ago</div>
+          </div>
+        </div>
+
+        <div class="person-orb healthy" onclick="showPerson('johnson')">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=johnson&backgroundColor=b6e3f4" alt="Johnson">
+          <div class="tooltip">
+            <div class="tooltip-name">Johnson Anumah</div>
+            <div class="tooltip-status">Last: 20 days ago</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Relationship Nudges -->
+      <section>
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            Stay Connected
+          </h2>
+        </div>
+
+        <div class="nudges">
+          <div class="nudge-card urgent">
+            <div class="nudge-header">
+              <img class="nudge-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=mom&backgroundColor=ffdfbf" alt="Mom">
+              <div class="nudge-info">
+                <h4>Mom</h4>
+                <p class="overdue">5 days since last call • 2 days overdue</p>
+              </div>
+              <span class="nudge-tier tier-family">Family</span>
+            </div>
+            <button class="nudge-action" onclick="logContact('mom')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              Call Mom
+            </button>
+          </div>
+
+          <div class="nudge-card">
+            <div class="nudge-header">
+              <img class="nudge-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=bokim&backgroundColor=d1d4f9" alt="Bo Kim">
+              <div class="nudge-info">
+                <h4>Bo Kim</h4>
+                <p>25 days since last text • Due in 5 days</p>
+              </div>
+              <span class="nudge-tier tier-inner">Inner Circle</span>
+            </div>
+            <div class="nudge-actions">
+              <button class="nudge-action" onclick="logContact('bo')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Send Text
+              </button>
+              <button class="nudge-action secondary">Later</button>
+            </div>
+          </div>
+
+          <div class="nudge-card">
+            <div class="nudge-header">
+              <img class="nudge-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=johnson&backgroundColor=b6e3f4" alt="Johnson">
+              <div class="nudge-info">
+                <h4>Johnson Anumah</h4>
+                <p>20 days ago • Healthy</p>
+              </div>
+              <span class="nudge-tier tier-inner">Inner Circle</span>
+            </div>
+            <div class="nudge-actions">
+              <button class="nudge-action secondary" onclick="showPerson('johnson')">View Activity</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live Now -->
+      <section class="live-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg class="icon" style="color: #ef4444;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            Live Now
+          </h2>
+        </div>
+
+        <div class="live-grid">
+          <div class="signal-card" onclick="pinSignal('stream1')">
+            <div class="signal-thumbnail">
+              <img src="https://picsum.photos/seed/stream1/400/225" alt="Live stream">
+              <span class="live-badge">LIVE</span>
+              <div class="platform-badge twitch">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+              </div>
+              <button class="pin-button" onclick="event.stopPropagation(); pinSignal('stream1')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 4 4M5 5v4M5 5h4M19 19l-4-4M19 19v-4M19 19h-4"/></svg>
+              </button>
+            </div>
+            <div class="signal-content">
+              <h3 class="signal-title">Late Night Coding Session - Building Something Cool</h3>
+              <div class="signal-meta">
+                <img class="signal-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=sarah" alt="Sarah">
+                <span class="signal-author">Sarah Chen</span>
+                <span class="signal-time">2.4K viewers</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="signal-card" onclick="pinSignal('stream2')">
+            <div class="signal-thumbnail">
+              <img src="https://picsum.photos/seed/stream2/400/225" alt="Live stream">
+              <span class="live-badge">LIVE</span>
+              <div class="platform-badge youtube">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </div>
+              <button class="pin-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 4 4M5 5v4M5 5h4M19 19l-4-4M19 19v-4M19 19h-4"/></svg>
+              </button>
+            </div>
+            <div class="signal-content">
+              <h3 class="signal-title">Weekly Tech News & Q&A with viewers!</h3>
+              <div class="signal-meta">
+                <img class="signal-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=mike" alt="Mike">
+                <span class="signal-author">Mike Torres</span>
+                <span class="signal-time">891 watching</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent Activity -->
+      <section class="signals-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Recent Activity
+          </h2>
+        </div>
+
+        <div class="activity-feed">
+          <div class="activity-item">
+            <img class="activity-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=kyle" alt="Kyle">
+            <div class="activity-content">
+              <p class="activity-text"><strong>Kyle Martinez</strong> <span>pushed 3 commits to</span> <strong>react-dashboard</strong></p>
+              <p class="activity-time">2 hours ago</p>
+            </div>
+            <div class="activity-platform" style="background: #333;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </div>
+          </div>
+
+          <div class="activity-item">
+            <img class="activity-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=emma" alt="Emma">
+            <div class="activity-content">
+              <p class="activity-text"><strong>Emma Wilson</strong> <span>uploaded a new video:</span> <strong>"My Morning Routine 2024"</strong></p>
+              <p class="activity-time">5 hours ago</p>
+            </div>
+            <div class="activity-platform" style="background: #ff0000;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            </div>
+          </div>
+
+          <div class="activity-item">
+            <img class="activity-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=alex" alt="Alex">
+            <div class="activity-content">
+              <p class="activity-text"><strong>Alex Rivera</strong> <span>opened a pull request:</span> <strong>"Add dark mode support"</strong></p>
+              <p class="activity-time">Yesterday</p>
+            </div>
+            <div class="activity-platform" style="background: #333;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </div>
+          </div>
+
+          <div class="activity-item">
+            <img class="activity-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=jake" alt="Jake">
+            <div class="activity-content">
+              <p class="activity-text"><strong>Jake Thompson</strong> <span>was raided by</span> <strong>Ninja</strong> <span>on stream!</span></p>
+              <p class="activity-time">Yesterday</p>
+            </div>
+            <div class="activity-platform" style="background: #9146ff;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Pinned Panel -->
+  <div class="pinned-panel" id="pinnedPanel">
+    <div class="pinned-header">
+      <h3>Now Playing</h3>
+      <button class="close-btn" onclick="closePinned()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="pinned-video">
+      <iframe src="" id="pinnedVideo" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+    <div class="pinned-details">
+      <h2 class="pinned-title" id="pinnedTitle">Late Night Coding Session</h2>
+      <div class="pinned-author">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=sarah" alt="Sarah" id="pinnedAvatar">
+        <div>
+          <div class="pinned-author-name" id="pinnedAuthor">Sarah Chen</div>
+          <div class="pinned-author-status">Streaming now • 2.4K viewers</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Person Detail Panel -->
+  <div class="person-panel" id="personPanel">
+    <div class="pinned-header">
+      <h3>Contact Details</h3>
+      <button class="close-btn" onclick="closePersonPanel()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="person-profile">
+      <img src="" id="personAvatar" alt="">
+      <div>
+        <h2 class="person-name" id="personName"></h2>
+        <span class="nudge-tier tier-family" id="personTier"></span>
+      </div>
+    </div>
+    <div class="person-stats">
+      <div class="stat-card">
+        <div class="stat-row">
+          <span class="stat-label">Connection Health</span>
+          <span class="stat-value" id="personHealth">Healthy</span>
+        </div>
+        <div class="health-bar">
+          <div class="health-fill good" id="personHealthBar" style="width: 80%"></div>
+        </div>
+        <div class="stat-row" style="margin-top: 1rem; margin-bottom: 0;">
+          <span class="stat-label">Last Contact</span>
+          <span class="stat-value" id="personLastContact">1 day ago</span>
+        </div>
+        <div class="stat-row" style="margin-bottom: 0;">
+          <span class="stat-label">Ideal Frequency</span>
+          <span class="stat-value" id="personFrequency">Every 3 days</span>
+        </div>
+      </div>
+    </div>
+    <div class="person-footer">
+      <button class="log-contact-btn" id="logContactBtn" onclick="logContactFromPanel()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Log Contact
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Modal -->
+  <div class="search-modal" id="searchModal" onclick="closeSearch()">
+    <div class="search-container" onclick="event.stopPropagation()">
+      <div class="search-input-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" class="search-input" placeholder="Ask anything about your network..." id="searchInput" onkeydown="handleSearchKey(event)">
+      </div>
+      <div class="search-results">
+        <div class="search-hint">
+          Try: "Who's streaming right now?" or "Show me Kyle's recent commits"
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // People data
+    const people = {
+      mom: {
+        name: 'Mom',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mom&backgroundColor=ffdfbf',
+        tier: 'Family',
+        tierClass: 'tier-family',
+        lastContact: 5,
+        frequency: 3,
+        health: 'Needs Attention',
+        healthClass: 'bad'
+      },
+      dad: {
+        name: 'Dad',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dad&backgroundColor=c0aede',
+        tier: 'Family',
+        tierClass: 'tier-family',
+        lastContact: 1,
+        frequency: 3,
+        health: 'Healthy',
+        healthClass: 'good'
+      },
+      bo: {
+        name: 'Bo Kim',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bokim&backgroundColor=d1d4f9',
+        tier: 'Inner Circle',
+        tierClass: 'tier-inner',
+        lastContact: 25,
+        frequency: 30,
+        health: 'Good',
+        healthClass: 'good'
+      },
+      nana: {
+        name: 'Nana',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=nana&backgroundColor=ffd5dc',
+        tier: 'Inner Circle',
+        tierClass: 'tier-inner',
+        lastContact: 10,
+        frequency: 30,
+        health: 'Healthy',
+        healthClass: 'good'
+      },
+      johnson: {
+        name: 'Johnson Anumah',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=johnson&backgroundColor=b6e3f4',
+        tier: 'Inner Circle',
+        tierClass: 'tier-inner',
+        lastContact: 20,
+        frequency: 60,
+        health: 'Healthy',
+        healthClass: 'good'
+      }
+    };
+
+    let currentPerson = null;
+
+    // Platform toggle
+    function togglePlatform(platform) {
+      const orb = document.querySelector(`.platform-orb.${platform}`);
+      orb.classList.toggle('active');
+    }
+
+    // Pin signal
+    function pinSignal(signalId) {
+      const panel = document.getElementById('pinnedPanel');
+      panel.classList.add('open');
+
+      // Set video (using a sample YouTube video for demo)
+      document.getElementById('pinnedVideo').src = 'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0';
+    }
+
+    function closePinned() {
+      const panel = document.getElementById('pinnedPanel');
+      panel.classList.remove('open');
+      document.getElementById('pinnedVideo').src = '';
+    }
+
+    // Person panel
+    function showPerson(personId) {
+      const person = people[personId];
+      if (!person) return;
+
+      currentPerson = personId;
+
+      document.getElementById('personAvatar').src = person.avatar;
+      document.getElementById('personName').textContent = person.name;
+      document.getElementById('personTier').textContent = person.tier;
+      document.getElementById('personTier').className = `nudge-tier ${person.tierClass}`;
+      document.getElementById('personHealth').textContent = person.health;
+      document.getElementById('personHealth').className = `stat-value ${person.healthClass}`;
+      document.getElementById('personLastContact').textContent = `${person.lastContact} days ago`;
+      document.getElementById('personFrequency').textContent = `Every ${person.frequency} days`;
+
+      const healthPercent = Math.max(0, 100 - (person.lastContact / person.frequency) * 100);
+      const healthBar = document.getElementById('personHealthBar');
+      healthBar.style.width = `${Math.max(5, healthPercent)}%`;
+      healthBar.className = `health-fill ${person.healthClass}`;
+
+      document.getElementById('personPanel').classList.add('open');
+    }
+
+    function closePersonPanel() {
+      document.getElementById('personPanel').classList.remove('open');
+      currentPerson = null;
+    }
+
+    function logContact(personId) {
+      const btn = event.target.closest('button');
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Logged!';
+      btn.style.background = '#22c55e';
+
+      setTimeout(() => {
+        btn.innerHTML = originalHTML;
+        btn.style.background = '';
+      }, 2000);
+    }
+
+    function logContactFromPanel() {
+      const btn = document.getElementById('logContactBtn');
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Logged!';
+      btn.classList.add('success');
+
+      // Update the person's data
+      if (currentPerson && people[currentPerson]) {
+        people[currentPerson].lastContact = 0;
+        people[currentPerson].health = 'Healthy';
+        people[currentPerson].healthClass = 'good';
+
+        // Update UI
+        document.getElementById('personLastContact').textContent = 'Today';
+        document.getElementById('personHealth').textContent = 'Healthy';
+        document.getElementById('personHealth').className = 'stat-value good';
+        document.getElementById('personHealthBar').style.width = '100%';
+        document.getElementById('personHealthBar').className = 'health-fill good';
+      }
+
+      setTimeout(() => {
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Log Contact';
+        btn.classList.remove('success');
+      }, 2000);
+    }
+
+    // Search
+    function openSearch() {
+      document.getElementById('searchModal').classList.add('open');
+      document.getElementById('searchInput').focus();
+    }
+
+    function closeSearch() {
+      document.getElementById('searchModal').classList.remove('open');
+    }
+
+    function handleSearchKey(e) {
+      if (e.key === 'Escape') closeSearch();
+    }
+
+    // Keyboard shortcut
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        openSearch();
+      }
+      if (e.key === 'Escape') {
+        closeSearch();
+        closePinned();
+        closePersonPanel();
+      }
+    });
+  </script>
+</body>
+</html>
