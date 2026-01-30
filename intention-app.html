@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Intention">
+  <meta name="theme-color" content="#0a0a12">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%238b5cf6' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' fill='white' font-size='50' font-family='system-ui'>I</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <title>Intention</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg-primary: #06060a;
+      --bg-secondary: #0d0d14;
+      --glass: rgba(255, 255, 255, 0.03);
+      --glass-hover: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      --purple: #8b5cf6;
+      --purple-light: #a78bfa;
+      --purple-glow: rgba(139, 92, 246, 0.5);
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.4);
+      --pink: #ec4899;
+      --pink-glow: rgba(236, 72, 153, 0.4);
+      --youtube: #ff0000;
+      --github: #ffffff;
+      --twitch: #9146ff;
+      --discord: #5865f2;
+      --strava: #fc4c02;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      touch-action: pan-x pan-y;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overscroll-behavior: none;
+    }
+
+    /* Animated gradient background */
+    .bg-gradient {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 100%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 0%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 30% at 50% 50%, rgba(236, 72, 153, 0.05) 0%, transparent 60%);
+      animation: gradientShift 20s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Floating particles */
+    .particles {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      animation: float 15s infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* Main app container */
+    .app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding-top: max(12px, var(--safe-top));
+      padding-bottom: max(20px, var(--safe-bottom));
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    header {
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      box-shadow: 0 0 20px var(--purple-glow);
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--purple-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: var(--glass);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.95);
+      background: var(--glass-hover);
+    }
+
+    /* Holographic glass cards */
+    .holo-card {
+      position: relative;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0.02) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+      );
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .holo-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(255, 255, 255, 0.1) 45%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.1) 55%,
+        transparent 60%
+      );
+      transform: translateX(-100%);
+      transition: transform 0.6s;
+    }
+
+    .holo-card:active::before {
+      transform: translateX(100%);
+    }
+
+    .holo-card::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 17px;
+      padding: 1px;
+      background: linear-gradient(
+        135deg,
+        rgba(139, 92, 246, 0.3),
+        rgba(6, 182, 212, 0.2),
+        rgba(236, 72, 153, 0.3)
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .holo-card:active::after {
+      opacity: 1;
+    }
+
+    .holo-card.active::after {
+      opacity: 1;
+      animation: borderGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes borderGlow {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    /* Constellation section */
+    .constellation-section {
+      flex: 0 0 auto;
+      height: 240px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+    }
+
+    .orbit {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .orbit-1 { width: 120px; height: 120px; }
+    .orbit-2 { width: 180px; height: 180px; }
+    .orbit-3 { width: 260px; height: 260px; }
+
+    .sun {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      box-shadow:
+        0 0 40px var(--purple-glow),
+        0 0 80px rgba(139, 92, 246, 0.2),
+        inset 0 0 20px rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 12px;
+      z-index: 10;
+      animation: sunPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes sunPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .platform-orb {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 0 20px currentColor;
+    }
+
+    .platform-orb:active {
+      transform: scale(1.2);
+    }
+
+    .platform-orb svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .platform-orb.youtube { background: linear-gradient(135deg, #ff0000, #cc0000); color: white; top: 50%; left: calc(50% + 70px); transform: translateY(-50%); }
+    .platform-orb.github { background: linear-gradient(135deg, #333, #1a1a1a); color: white; top: calc(50% - 50px); left: calc(50% - 35px); }
+    .platform-orb.twitch { background: linear-gradient(135deg, #9146ff, #772ce8); color: white; top: calc(50% + 45px); left: calc(50% - 45px); }
+    .platform-orb.discord { background: linear-gradient(135deg, #5865f2, #4752c4); color: white; opacity: 0.3; top: calc(50% - 80px); left: calc(50% + 60px); }
+    .platform-orb.strava { background: linear-gradient(135deg, #fc4c02, #e34402); color: white; opacity: 0.3; top: calc(50% + 90px); left: calc(50% + 50px); }
+
+    .platform-orb.inactive { opacity: 0.3; box-shadow: none; }
+
+    /* Person orbs */
+    .person-orb {
+      position: absolute;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .person-orb:active {
+      transform: scale(1.15);
+    }
+
+    .person-orb img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid;
+      object-fit: cover;
+    }
+
+    .person-orb.urgent img {
+      border-color: var(--red);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+      animation: urgentPulse 1.5s ease-in-out infinite;
+    }
+
+    .person-orb.healthy img { border-color: var(--green); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+    .person-orb.warning img { border-color: var(--yellow); box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+
+    @keyframes urgentPulse {
+      0%, 100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); }
+      50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.9); }
+    }
+
+    .person-orb .alert-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 14px;
+      height: 14px;
+      background: var(--red);
+      border-radius: 50%;
+      font-size: 8px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .person-orb:nth-child(1) { top: 50%; left: calc(50% - 115px); transform: translateY(-50%); }
+    .person-orb:nth-child(2) { top: calc(50% - 95px); left: calc(50% + 30px); }
+    .person-orb:nth-child(3) { top: calc(50% + 70px); left: calc(50% + 95px); }
+    .person-orb:nth-child(4) { top: calc(50% - 30px); left: calc(50% - 130px); }
+    .person-orb:nth-child(5) { top: calc(50% + 100px); left: calc(50% - 70px); }
+
+    /* Swipeable sections container */
+    .swipe-container {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .swipe-track {
+      display: flex;
+      height: 100%;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .swipe-panel {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0 16px;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Section indicators */
+    .section-indicators {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 0 8px;
+      flex-shrink: 0;
+    }
+
+    .indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transition: all 0.3s;
+    }
+
+    .indicator.active {
+      width: 24px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
+    }
+
+    /* Nudge cards */
+    .nudge-card {
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .nudge-card.urgent {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .nudge-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .nudge-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .nudge-info {
+      flex: 1;
+    }
+
+    .nudge-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .nudge-status {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .nudge-status.overdue {
+      color: var(--red);
+    }
+
+    .nudge-tier {
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tier-family { background: rgba(139, 92, 246, 0.2); color: var(--purple-light); }
+    .tier-inner { background: rgba(6, 182, 212, 0.2); color: var(--cyan); }
+
+    .nudge-action {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px var(--purple-glow);
+    }
+
+    .nudge-action:active {
+      transform: scale(0.98);
+      box-shadow: 0 2px 10px var(--purple-glow);
+    }
+
+    .nudge-action.secondary {
+      background: var(--glass);
+      box-shadow: none;
+      color: var(--text-secondary);
+    }
+
+    .nudge-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nudge-actions button {
+      flex: 1;
+    }
+
+    /* Section titles */
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title svg {
+      width: 16px;
+      height: 16px;
+      color: var(--purple);
+    }
+
+    /* Signal cards */
+    .signal-card {
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+
+    .signal-card:active {
+      transform: scale(0.98);
+    }
+
+    .signal-thumb {
+      position: relative;
+      aspect-ratio: 16/9;
+      border-radius: 12px 12px 0 0;
+      overflow: hidden;
+      background: var(--bg-secondary);
+    }
+
+    .signal-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .live-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: var(--red);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .platform-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .platform-badge svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .signal-body {
+      padding: 12px;
+    }
+
+    .signal-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .signal-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .signal-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+    }
+
+    .signal-author {
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+
+    .signal-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Activity items */
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+
+    .activity-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+    }
+
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .activity-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .activity-text strong {
+      color: var(--text-primary);
+    }
+
+    .activity-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .activity-platform {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .activity-platform svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Bottom sheet / Modal */
+    .bottom-sheet {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .bottom-sheet.open {
+      pointer-events: auto;
+    }
+
+    .sheet-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .bottom-sheet.open .sheet-backdrop {
+      opacity: 1;
+    }
+
+    .sheet-content {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-height: 85vh;
+      background: var(--bg-secondary);
+      border-radius: 24px 24px 0 0;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      padding-bottom: max(20px, var(--safe-bottom));
+    }
+
+    .bottom-sheet.open .sheet-content {
+      transform: translateY(0);
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      margin: 12px auto;
+    }
+
+    .sheet-header {
+      padding: 0 20px 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .sheet-profile {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .sheet-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 3px solid var(--purple);
+    }
+
+    .sheet-name {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .sheet-body {
+      padding: 20px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      border-radius: 16px;
+      background: var(--glass);
+      margin-bottom: 16px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .stat-value {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .stat-value.good { color: var(--green); }
+    .stat-value.warning { color: var(--yellow); }
+    .stat-value.bad { color: var(--red); }
+
+    .health-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .health-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s;
+    }
+
+    .health-fill.good { background: linear-gradient(90deg, var(--green), var(--cyan)); }
+    .health-fill.warning { background: linear-gradient(90deg, var(--yellow), #f97316); }
+    .health-fill.bad { background: linear-gradient(90deg, var(--red), var(--pink)); }
+
+    .sheet-footer {
+      padding: 0 20px;
+    }
+
+    .log-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px var(--purple-glow);
+      transition: all 0.3s;
+    }
+
+    .log-btn:active {
+      transform: scale(0.98);
+    }
+
+    .log-btn.success {
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Search overlay */
+    .search-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(6, 6, 10, 0.95);
+      backdrop-filter: blur(20px);
+      padding: max(60px, calc(var(--safe-top) + 20px)) 20px 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .search-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+    }
+
+    .search-box svg {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 16px;
+      color: white;
+      outline: none;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-close {
+      padding: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .search-hint {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Pinned content sheet */
+    .pinned-sheet {
+      position: fixed;
+      inset: 0;
+      z-index: 150;
+      pointer-events: none;
+    }
+
+    .pinned-sheet.open {
+      pointer-events: auto;
+    }
+
+    .pinned-sheet .sheet-backdrop {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .pinned-sheet .sheet-content {
+      max-height: 90vh;
+    }
+
+    .pinned-video {
+      aspect-ratio: 16/9;
+      background: black;
+      border-radius: 0;
+    }
+
+    .pinned-video iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .pinned-info {
+      padding: 16px 20px;
+    }
+
+    .pinned-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .pinned-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pinned-author img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+    }
+
+    .pinned-author-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .pinned-author-status {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Install prompt */
+    .install-prompt {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      padding: 16px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      z-index: 300;
+      display: none;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .install-prompt.show {
+      display: block;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .install-text {
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .install-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .install-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .install-btn.primary {
+      background: white;
+      color: var(--purple);
+    }
+
+    .install-btn.secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-gradient"></div>
+  <div class="particles" id="particles"></div>
+
+  <div class="app">
+    <!-- Header -->
+    <header>
+      <div class="logo">
+        <div class="logo-icon">I</div>
+        <span class="logo-text">Intention</span>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="openSearch()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <button class="icon-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Constellation -->
+    <section class="constellation-section">
+      <div class="orbit orbit-1"></div>
+      <div class="orbit orbit-2"></div>
+      <div class="orbit orbit-3"></div>
+
+      <div class="sun">You</div>
+
+      <!-- Platforms -->
+      <div class="platform-orb youtube" onclick="togglePlatform(this)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </div>
+      <div class="platform-orb github" onclick="togglePlatform(this)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+      </div>
+      <div class="platform-orb twitch" onclick="togglePlatform(this)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+      </div>
+      <div class="platform-orb discord inactive">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+      </div>
+      <div class="platform-orb strava inactive">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+      </div>
+
+      <!-- People -->
+      <div class="person-orb urgent" onclick="showPerson('mom')">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=mom&backgroundColor=ffdfbf" alt="Mom">
+        <span class="alert-badge">!</span>
+      </div>
+      <div class="person-orb healthy" onclick="showPerson('dad')">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=dad&backgroundColor=c0aede" alt="Dad">
+      </div>
+      <div class="person-orb warning" onclick="showPerson('bo')">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=bokim&backgroundColor=d1d4f9" alt="Bo">
+      </div>
+      <div class="person-orb healthy" onclick="showPerson('nana')">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=nana&backgroundColor=ffd5dc" alt="Nana">
+      </div>
+      <div class="person-orb healthy" onclick="showPerson('johnson')">
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=johnson&backgroundColor=b6e3f4" alt="Johnson">
+      </div>
+    </section>
+
+    <!-- Section indicators -->
+    <div class="section-indicators">
+      <div class="indicator active" data-index="0"></div>
+      <div class="indicator" data-index="1"></div>
+      <div class="indicator" data-index="2"></div>
+    </div>
+
+    <!-- Swipeable content -->
+    <div class="swipe-container" id="swipeContainer">
+      <div class="swipe-track" id="swipeTrack">
+        <!-- Panel 1: Nudges -->
+        <div class="swipe-panel">
+          <h3 class="section-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            Stay Connected
+          </h3>
+
+          <div class="holo-card nudge-card urgent">
+            <div class="nudge-header">
+              <img class="nudge-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=mom&backgroundColor=ffdfbf" alt="Mom">
+              <div class="nudge-info">
+                <div class="nudge-name">Mom</div>
+                <div class="nudge-status overdue">5 days ago · 2 days overdue</div>
+              </div>
+              <span class="nudge-tier tier-family">Family</span>
+            </div>
+            <button class="nudge-action" onclick="logContact('mom')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              Call Mom
+            </button>
+          </div>
+
+          <div class="holo-card nudge-card">
+            <div class="nudge-header">
+              <img class="nudge-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=bokim&backgroundColor=d1d4f9" alt="Bo">
+              <div class="nudge-info">
+                <div class="nudge-name">Bo Kim</div>
+                <div class="nudge-status">25 days ago · Due in 5 days</div>
+              </div>
+              <span class="nudge-tier tier-inner">Inner Circle</span>
+            </div>
+            <div class="nudge-actions">
+              <button class="nudge-action" onclick="logContact('bo')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Text
+              </button>
+              <button class="nudge-action secondary">Later</button>
+            </div>
+          </div>
+
+          <div class="holo-card nudge-card">
+            <div class="nudge-header">
+              <img class="nudge-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=johnson&backgroundColor=b6e3f4" alt="Johnson">
+              <div class="nudge-info">
+                <div class="nudge-name">Johnson Anumah</div>
+                <div class="nudge-status">20 days ago · Healthy</div>
+              </div>
+              <span class="nudge-tier tier-inner">Inner Circle</span>
+            </div>
+            <button class="nudge-action secondary" onclick="showPerson('johnson')">View</button>
+          </div>
+        </div>
+
+        <!-- Panel 2: Live -->
+        <div class="swipe-panel">
+          <h3 class="section-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444;"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            Live Now
+          </h3>
+
+          <div class="holo-card signal-card" onclick="openPinned('stream1')">
+            <div class="signal-thumb">
+              <img src="https://picsum.photos/seed/live1/400/225" alt="Stream">
+              <span class="live-badge">LIVE</span>
+              <div class="platform-badge" style="background: #9146ff;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+              </div>
+            </div>
+            <div class="signal-body">
+              <div class="signal-title">Late Night Coding Session</div>
+              <div class="signal-meta">
+                <img class="signal-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=sarah" alt="Sarah">
+                <span class="signal-author">Sarah Chen</span>
+                <span class="signal-time">2.4K watching</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="holo-card signal-card" onclick="openPinned('stream2')">
+            <div class="signal-thumb">
+              <img src="https://picsum.photos/seed/live2/400/225" alt="Stream">
+              <span class="live-badge">LIVE</span>
+              <div class="platform-badge" style="background: #ff0000;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </div>
+            </div>
+            <div class="signal-body">
+              <div class="signal-title">Weekly Tech News & Q&A</div>
+              <div class="signal-meta">
+                <img class="signal-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=mike" alt="Mike">
+                <span class="signal-author">Mike Torres</span>
+                <span class="signal-time">891 watching</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: Activity -->
+        <div class="swipe-panel">
+          <h3 class="section-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Recent Activity
+          </h3>
+
+          <div class="holo-card activity-item">
+            <img class="activity-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=kyle" alt="Kyle">
+            <div class="activity-content">
+              <div class="activity-text"><strong>Kyle Martinez</strong> pushed 3 commits</div>
+              <div class="activity-time">2 hours ago</div>
+            </div>
+            <div class="activity-platform" style="background: #333;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </div>
+          </div>
+
+          <div class="holo-card activity-item">
+            <img class="activity-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=emma" alt="Emma">
+            <div class="activity-content">
+              <div class="activity-text"><strong>Emma Wilson</strong> uploaded a video</div>
+              <div class="activity-time">5 hours ago</div>
+            </div>
+            <div class="activity-platform" style="background: #ff0000;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            </div>
+          </div>
+
+          <div class="holo-card activity-item">
+            <img class="activity-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=alex" alt="Alex">
+            <div class="activity-content">
+              <div class="activity-text"><strong>Alex Rivera</strong> opened a PR</div>
+              <div class="activity-time">Yesterday</div>
+            </div>
+            <div class="activity-platform" style="background: #333;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </div>
+          </div>
+
+          <div class="holo-card activity-item">
+            <img class="activity-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=jake" alt="Jake">
+            <div class="activity-content">
+              <div class="activity-text"><strong>Jake Thompson</strong> went live</div>
+              <div class="activity-time">Yesterday</div>
+            </div>
+            <div class="activity-platform" style="background: #9146ff;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Person Sheet -->
+  <div class="bottom-sheet" id="personSheet">
+    <div class="sheet-backdrop" onclick="closePersonSheet()"></div>
+    <div class="sheet-content">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-profile">
+          <img class="sheet-avatar" id="sheetAvatar" src="" alt="">
+          <div>
+            <div class="sheet-name" id="sheetName"></div>
+            <span class="nudge-tier tier-family" id="sheetTier"></span>
+          </div>
+        </div>
+      </div>
+      <div class="sheet-body">
+        <div class="stat-card">
+          <div class="stat-row">
+            <span class="stat-label">Connection Health</span>
+            <span class="stat-value" id="sheetHealth"></span>
+          </div>
+          <div class="health-bar">
+            <div class="health-fill" id="sheetHealthBar"></div>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Last Contact</span>
+            <span class="stat-value" id="sheetLast"></span>
+          </div>
+          <div class="stat-row" style="margin-bottom: 0;">
+            <span class="stat-label">Ideal Frequency</span>
+            <span class="stat-value" id="sheetFreq"></span>
+          </div>
+        </div>
+      </div>
+      <div class="sheet-footer">
+        <button class="log-btn" id="sheetLogBtn" onclick="logContactFromSheet()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Log Contact
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pinned Sheet -->
+  <div class="pinned-sheet bottom-sheet" id="pinnedSheet">
+    <div class="sheet-backdrop" onclick="closePinnedSheet()"></div>
+    <div class="sheet-content">
+      <div class="sheet-handle"></div>
+      <div class="pinned-video">
+        <iframe id="pinnedVideo" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      </div>
+      <div class="pinned-info">
+        <div class="pinned-title" id="pinnedTitle"></div>
+        <div class="pinned-author">
+          <img id="pinnedAvatar" src="" alt="">
+          <div>
+            <div class="pinned-author-name" id="pinnedAuthor"></div>
+            <div class="pinned-author-status" id="pinnedStatus"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Overlay -->
+  <div class="search-overlay" id="searchOverlay">
+    <div class="search-box">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search your network...">
+      <button class="search-close" onclick="closeSearch()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="search-hint">Try: "Who's streaming?" or "Show Kyle's commits"</div>
+  </div>
+
+  <!-- Install Prompt (iOS) -->
+  <div class="install-prompt" id="installPrompt">
+    <div class="install-text">
+      <strong>Add Intention to Home Screen</strong><br>
+      Tap the share icon, then "Add to Home Screen"
+    </div>
+    <div class="install-actions">
+      <button class="install-btn primary" onclick="dismissInstall()">Got it</button>
+      <button class="install-btn secondary" onclick="dismissInstall()">Later</button>
+    </div>
+  </div>
+
+  <script>
+    // Data
+    const people = {
+      mom: { name: 'Mom', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mom&backgroundColor=ffdfbf', tier: 'Family', tierClass: 'tier-family', lastContact: 5, frequency: 3, health: 'Needs Attention', healthClass: 'bad' },
+      dad: { name: 'Dad', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dad&backgroundColor=c0aede', tier: 'Family', tierClass: 'tier-family', lastContact: 1, frequency: 3, health: 'Healthy', healthClass: 'good' },
+      bo: { name: 'Bo Kim', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bokim&backgroundColor=d1d4f9', tier: 'Inner Circle', tierClass: 'tier-inner', lastContact: 25, frequency: 30, health: 'Good', healthClass: 'good' },
+      nana: { name: 'Nana', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=nana&backgroundColor=ffd5dc', tier: 'Inner Circle', tierClass: 'tier-inner', lastContact: 10, frequency: 30, health: 'Healthy', healthClass: 'good' },
+      johnson: { name: 'Johnson Anumah', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=johnson&backgroundColor=b6e3f4', tier: 'Inner Circle', tierClass: 'tier-inner', lastContact: 20, frequency: 60, health: 'Healthy', healthClass: 'good' }
+    };
+
+    const streams = {
+      stream1: { title: 'Late Night Coding Session', author: 'Sarah Chen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah', status: '2.4K watching', video: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
+      stream2: { title: 'Weekly Tech News & Q&A', author: 'Mike Torres', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike', status: '891 watching', video: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }
+    };
+
+    let currentPerson = null;
+    let currentPanel = 0;
+
+    // Create particles
+    const particlesContainer = document.getElementById('particles');
+    for (let i = 0; i < 20; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 15 + 's';
+      particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+      particlesContainer.appendChild(particle);
+    }
+
+    // Swipe handling
+    const swipeContainer = document.getElementById('swipeContainer');
+    const swipeTrack = document.getElementById('swipeTrack');
+    const indicators = document.querySelectorAll('.indicator');
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+
+    swipeContainer.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      isDragging = true;
+      swipeTrack.style.transition = 'none';
+    });
+
+    swipeContainer.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      currentX = e.touches[0].clientX;
+      const diff = currentX - startX;
+      const offset = -currentPanel * 100 + (diff / swipeContainer.offsetWidth) * 100;
+      swipeTrack.style.transform = `translateX(${offset}%)`;
+    });
+
+    swipeContainer.addEventListener('touchend', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      swipeTrack.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+
+      const diff = currentX - startX;
+      const threshold = swipeContainer.offsetWidth * 0.2;
+
+      if (diff < -threshold && currentPanel < 2) {
+        currentPanel++;
+      } else if (diff > threshold && currentPanel > 0) {
+        currentPanel--;
+      }
+
+      updatePanel();
+    });
+
+    function updatePanel() {
+      swipeTrack.style.transform = `translateX(-${currentPanel * 100}%)`;
+      indicators.forEach((ind, i) => {
+        ind.classList.toggle('active', i === currentPanel);
+      });
+    }
+
+    // Click indicators
+    indicators.forEach((ind, i) => {
+      ind.addEventListener('click', () => {
+        currentPanel = i;
+        updatePanel();
+      });
+    });
+
+    // Platform toggle
+    function togglePlatform(el) {
+      if (el.classList.contains('inactive')) return;
+      el.style.transform = 'scale(1.3)';
+      setTimeout(() => el.style.transform = '', 200);
+    }
+
+    // Person sheet
+    function showPerson(id) {
+      const person = people[id];
+      if (!person) return;
+      currentPerson = id;
+
+      document.getElementById('sheetAvatar').src = person.avatar;
+      document.getElementById('sheetName').textContent = person.name;
+      document.getElementById('sheetTier').textContent = person.tier;
+      document.getElementById('sheetTier').className = `nudge-tier ${person.tierClass}`;
+      document.getElementById('sheetHealth').textContent = person.health;
+      document.getElementById('sheetHealth').className = `stat-value ${person.healthClass}`;
+      document.getElementById('sheetLast').textContent = person.lastContact === 0 ? 'Today' : `${person.lastContact} days ago`;
+      document.getElementById('sheetFreq').textContent = `Every ${person.frequency} days`;
+
+      const healthPercent = Math.max(5, 100 - (person.lastContact / person.frequency) * 100);
+      const healthBar = document.getElementById('sheetHealthBar');
+      healthBar.style.width = healthPercent + '%';
+      healthBar.className = `health-fill ${person.healthClass}`;
+
+      document.getElementById('personSheet').classList.add('open');
+    }
+
+    function closePersonSheet() {
+      document.getElementById('personSheet').classList.remove('open');
+    }
+
+    function logContactFromSheet() {
+      const btn = document.getElementById('sheetLogBtn');
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Logged!';
+      btn.classList.add('success');
+
+      if (currentPerson && people[currentPerson]) {
+        people[currentPerson].lastContact = 0;
+        people[currentPerson].health = 'Healthy';
+        people[currentPerson].healthClass = 'good';
+        document.getElementById('sheetLast').textContent = 'Today';
+        document.getElementById('sheetHealth').textContent = 'Healthy';
+        document.getElementById('sheetHealth').className = 'stat-value good';
+        document.getElementById('sheetHealthBar').style.width = '100%';
+        document.getElementById('sheetHealthBar').className = 'health-fill good';
+      }
+
+      setTimeout(() => {
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Log Contact';
+        btn.classList.remove('success');
+      }, 2000);
+    }
+
+    function logContact(id) {
+      const btn = event.target.closest('button');
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Logged!';
+      btn.style.background = 'linear-gradient(135deg, #10b981, #06b6d4)';
+      setTimeout(() => location.reload(), 1500);
+    }
+
+    // Pinned sheet
+    function openPinned(id) {
+      const stream = streams[id];
+      if (!stream) return;
+
+      document.getElementById('pinnedTitle').textContent = stream.title;
+      document.getElementById('pinnedAuthor').textContent = stream.author;
+      document.getElementById('pinnedAvatar').src = stream.avatar;
+      document.getElementById('pinnedStatus').textContent = stream.status;
+      document.getElementById('pinnedVideo').src = stream.video;
+
+      document.getElementById('pinnedSheet').classList.add('open');
+    }
+
+    function closePinnedSheet() {
+      document.getElementById('pinnedSheet').classList.remove('open');
+      document.getElementById('pinnedVideo').src = '';
+    }
+
+    // Search
+    function openSearch() {
+      document.getElementById('searchOverlay').classList.add('open');
+      document.getElementById('searchInput').focus();
+    }
+
+    function closeSearch() {
+      document.getElementById('searchOverlay').classList.remove('open');
+    }
+
+    // iOS install prompt
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+
+    function isInStandaloneMode() {
+      return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    }
+
+    if (isIOS() && !isInStandaloneMode() && !localStorage.getItem('installDismissed')) {
+      setTimeout(() => {
+        document.getElementById('installPrompt').classList.add('show');
+      }, 3000);
+    }
+
+    function dismissInstall() {
+      document.getElementById('installPrompt').classList.remove('show');
+      localStorage.setItem('installDismissed', 'true');
+    }
+
+    // Keyboard
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeSearch();
+        closePersonSheet();
+        closePinnedSheet();
+      }
+    });
+  </script>
+</body>
+</html>

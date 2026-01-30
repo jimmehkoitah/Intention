@@ -1,6 +1,13 @@
-# UpKeep - Your Social Universe
+# Intention - Your Social Universe
 
-A social management app that aggregates your relationships across platforms into one beautiful, spatial interface. Stay connected with the people who matter.
+A mobile-first social management app that aggregates your relationships across platforms into one beautiful, spatial interface. Stay connected with the people who matter.
+
+## Quick Demo (No Setup Required)
+
+1. Download `intention-app.html` from this repo
+2. Open it in your phone's browser (Safari on iOS, Chrome on Android)
+3. **iOS**: Tap Share → "Add to Home Screen" to install as an app
+4. **Android**: Tap menu → "Install app" or "Add to Home Screen"
 
 ## Features
 
@@ -10,6 +17,8 @@ A social management app that aggregates your relationships across platforms into
 - **AI-Powered Search**: Ask natural language questions about your network
 - **Signal Feed**: See activity from your network in real-time
 - **Pinned Content**: Watch streams while browsing other updates
+- **Horizontal Swipe**: Navigate between sections with natural gestures
+- **PWA Support**: Install on your phone's home screen like a native app
 
 ## Tech Stack
 
