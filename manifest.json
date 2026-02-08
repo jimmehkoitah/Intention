@@ -1,0 +1,20 @@
+{
+  "name": "Intention",
+  "short_name": "Intention",
+  "description": "Your social universe - stay connected with the people who matter",
+  "start_url": "/intention-app.html",
+  "display": "standalone",
+  "background_color": "#06060a",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%238b5cf6' width='512' height='512' rx='100'/><text x='256' y='340' text-anchor='middle' fill='white' font-size='280' font-family='system-ui' font-weight='bold'>I</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "lifestyle"],
+  "lang": "en-US"
+}

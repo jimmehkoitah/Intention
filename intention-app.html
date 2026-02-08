@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Intention">
+  <meta name="theme-color" content="#0a0a12">
+  <title>Intention</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #08080c;
+      --bg-card: rgba(255,255,255,0.04);
+      --bg-card-hover: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.08);
+      --text: #ffffff;
+      --text-dim: rgba(255,255,255,0.6);
+      --text-muted: rgba(255,255,255,0.35);
+      --purple: #8b5cf6;
+      --cyan: #06b6d4;
+      --pink: #ec4899;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --youtube: #ff0000;
+      --github: #f0f0f0;
+      --twitch: #9146ff;
+      --discord: #5865f2;
+      --strava: #fc4c02;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* Ambient background */
+    .ambient {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 100% 80% at 30% 120%, rgba(139,92,246,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse 80% 60% at 80% -10%, rgba(6,182,212,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 10% 30%, rgba(236,72,153,0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    /* App container */
+    .app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding-top: max(12px, var(--safe-top));
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .header {
+      padding: 8px 20px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+      box-shadow: 0 4px 20px rgba(139,92,246,0.4);
+    }
+
+    .logo-name {
+      font-size: 20px;
+      font-weight: 600;
+      background: linear-gradient(90deg, #a78bfa, var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: var(--bg-card);
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+      background: var(--bg-card-hover);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      padding: 0 20px;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: none;
+      background: var(--bg-card);
+      color: var(--text-dim);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tab::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--purple), var(--cyan));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .tab.active {
+      color: white;
+      box-shadow: 0 4px 20px rgba(139,92,246,0.3);
+    }
+
+    .tab.active::before {
+      opacity: 1;
+    }
+
+    .tab span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .tab:active {
+      transform: scale(0.97);
+    }
+
+    /* Main content area */
+    .content {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      transform: translateX(20px);
+    }
+
+    .panel.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+
+    /* Discovery Panel */
+    .discovery {
+      padding: 0 20px;
+      padding-bottom: max(20px, var(--safe-bottom));
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .orb-canvas {
+      position: relative;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* Platform Orbs */
+    .orb {
+      position: absolute;
+      cursor: grab;
+      transition: box-shadow 0.3s, transform 0.15s;
+      z-index: 10;
+      touch-action: none;
+    }
+
+    .orb:active {
+      cursor: grabbing;
+    }
+
+    .orb-circle {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .orb-circle::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .orb:active .orb-circle::before {
+      opacity: 1;
+    }
+
+    .orb-circle svg {
+      width: 28px;
+      height: 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .orb-label {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-dim);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .orb:active .orb-label,
+    .orb.expanded .orb-label {
+      opacity: 1;
+    }
+
+    /* Orb colors */
+    .orb.youtube .orb-circle { background: linear-gradient(135deg, #ff0000, #cc0000); box-shadow: 0 8px 30px rgba(255,0,0,0.35); }
+    .orb.github .orb-circle { background: linear-gradient(135deg, #333, #1a1a1a); box-shadow: 0 8px 30px rgba(255,255,255,0.15); }
+    .orb.twitch .orb-circle { background: linear-gradient(135deg, #9146ff, #6b2fb8); box-shadow: 0 8px 30px rgba(145,70,255,0.35); }
+    .orb.discord .orb-circle { background: linear-gradient(135deg, #5865f2, #4752c4); box-shadow: 0 8px 30px rgba(88,101,242,0.35); }
+    .orb.strava .orb-circle { background: linear-gradient(135deg, #fc4c02, #d43d00); box-shadow: 0 8px 30px rgba(252,76,2,0.35); }
+    .orb.contacts .orb-circle { background: linear-gradient(135deg, var(--green), #059669); box-shadow: 0 8px 30px rgba(16,185,129,0.35); }
+
+    .orb.inactive .orb-circle {
+      opacity: 0.35;
+      box-shadow: none;
+    }
+
+    /* Expanded orb */
+    .orb.expanded {
+      z-index: 50;
+    }
+
+    .orb.expanded .orb-circle {
+      width: 280px;
+      height: auto;
+      min-height: 200px;
+      border-radius: 24px;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 16px;
+    }
+
+    .orb.expanded .orb-circle svg {
+      display: none;
+    }
+
+    .orb-expanded-content {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .orb.expanded .orb-expanded-content {
+      display: flex;
+    }
+
+    .orb-expanded-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .orb-expanded-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .orb-expanded-title svg {
+      width: 20px;
+      height: 20px;
+      display: block !important;
+    }
+
+    .orb-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .orb-close:active {
+      background: rgba(255,255,255,0.25);
+    }
+
+    .orb-content-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .orb-content-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .orb-content-item:active {
+      background: rgba(0,0,0,0.4);
+    }
+
+    .orb-content-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: rgba(0,0,0,0.3);
+    }
+
+    .orb-content-thumb.avatar {
+      border-radius: 50%;
+    }
+
+    .orb-content-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .orb-content-title {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .orb-content-meta {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      margin-top: 2px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--red);
+      border-radius: 50%;
+      animation: livePulse 1.5s infinite;
+    }
+
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.2); }
+    }
+
+    /* Contacts orb specific */
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+    }
+
+    .contact-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid;
+    }
+
+    .contact-avatar.urgent { border-color: var(--red); }
+    .contact-avatar.warning { border-color: var(--yellow); }
+    .contact-avatar.healthy { border-color: var(--green); }
+
+    .contact-info {
+      flex: 1;
+    }
+
+    .contact-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .contact-status {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .contact-status.urgent { color: var(--red); }
+
+    .contact-action {
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: none;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .contact-action:active {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* Recommendations Panel */
+    .recommendations {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding-bottom: max(20px, var(--safe-bottom));
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .rec-section {
+      padding: 0 20px;
+    }
+
+    .rec-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .rec-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .rec-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .rec-see-all {
+      font-size: 13px;
+      color: var(--purple);
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Horizontal scroll container */
+    .rec-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding: 4px 0;
+      margin: 0 -20px;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .rec-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Recommendation cards */
+    .rec-card {
+      flex: 0 0 260px;
+      scroll-snap-align: start;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .rec-card:active {
+      transform: scale(0.97);
+    }
+
+    .rec-card-thumb {
+      aspect-ratio: 16/9;
+      background: var(--bg);
+      position: relative;
+    }
+
+    .rec-card-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .rec-card-live {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 4px 8px;
+      background: var(--red);
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .rec-card-platform {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rec-card-platform svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .rec-card-body {
+      padding: 14px;
+    }
+
+    .rec-card-title {
+      font-size: 14px;
+      font-weight: 500;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .rec-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .rec-card-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+    }
+
+    .rec-card-author {
+      font-size: 12px;
+      color: var(--text-dim);
+      flex: 1;
+    }
+
+    .rec-card-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Contact recommendation cards */
+    .rec-contact-card {
+      flex: 0 0 140px;
+      scroll-snap-align: start;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .rec-contact-card:active {
+      transform: scale(0.97);
+    }
+
+    .rec-contact-card.urgent {
+      border-color: rgba(239,68,68,0.3);
+      background: rgba(239,68,68,0.08);
+    }
+
+    .rec-contact-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 3px solid var(--green);
+      margin-bottom: 10px;
+    }
+
+    .rec-contact-card.urgent .rec-contact-avatar {
+      border-color: var(--red);
+      box-shadow: 0 0 20px rgba(239,68,68,0.4);
+    }
+
+    .rec-contact-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .rec-contact-status {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .rec-contact-card.urgent .rec-contact-status {
+      color: var(--red);
+    }
+
+    /* Bottom sheet */
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .sheet-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #121218;
+      border-radius: 28px 28px 0 0;
+      z-index: 101;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: max(20px, var(--safe-bottom));
+    }
+
+    .sheet.open {
+      transform: translateY(0);
+    }
+
+    .sheet-handle {
+      width: 40px;
+      height: 5px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+      margin: 12px auto;
+    }
+
+    .sheet-header {
+      padding: 0 24px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .sheet-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 3px solid var(--purple);
+    }
+
+    .sheet-name {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .sheet-tier {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 4px;
+      background: rgba(139,92,246,0.2);
+      color: #a78bfa;
+    }
+
+    .sheet-body {
+      padding: 0 24px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .sheet-stat-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .sheet-stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .sheet-stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .sheet-stat-value {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .sheet-stat-value.good { color: var(--green); }
+    .sheet-stat-value.bad { color: var(--red); }
+
+    .sheet-health-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .sheet-health-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+      transition: width 0.5s;
+    }
+
+    .sheet-health-fill.bad {
+      background: linear-gradient(90deg, var(--red), var(--pink));
+    }
+
+    .sheet-footer {
+      padding: 0 24px;
+    }
+
+    .sheet-action-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 30px rgba(139,92,246,0.4);
+      transition: all 0.2s;
+    }
+
+    .sheet-action-btn:active {
+      transform: scale(0.98);
+    }
+
+    .sheet-action-btn.success {
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      box-shadow: 0 8px 30px rgba(16,185,129,0.4);
+    }
+
+    /* Video sheet */
+    .video-sheet .sheet-video {
+      aspect-ratio: 16/9;
+      background: black;
+      margin: 0 -24px;
+      margin-bottom: 16px;
+    }
+
+    .video-sheet .sheet-video iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .video-sheet .sheet-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      padding: 0 24px;
+    }
+
+    .video-sheet .sheet-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 24px;
+    }
+
+    .video-sheet .sheet-author img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .video-sheet .sheet-author-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .video-sheet .sheet-author-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Floating indicator */
+    .drag-hint {
+      position: fixed;
+      bottom: max(100px, calc(var(--safe-bottom) + 80px));
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      background: rgba(0,0,0,0.8);
+      border-radius: 20px;
+      font-size: 13px;
+      color: var(--text-dim);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .drag-hint.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient"></div>
+
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <div class="logo-mark">I</div>
+        <span class="logo-name">Intention</span>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="openSearch()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('discovery')"><span>Discovery</span></button>
+      <button class="tab" onclick="switchTab('recommendations')"><span>For You</span></button>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Discovery Panel -->
+      <div class="panel discovery active" id="discoveryPanel">
+        <div class="orb-canvas" id="orbCanvas">
+          <!-- Orbs will be positioned here -->
+        </div>
+      </div>
+
+      <!-- Recommendations Panel -->
+      <div class="panel recommendations" id="recommendationsPanel">
+
+        <!-- Reconnect Section -->
+        <section class="rec-section">
+          <div class="rec-header">
+            <div>
+              <div class="rec-title">Reconnect</div>
+              <div class="rec-subtitle">People you should reach out to</div>
+            </div>
+          </div>
+          <div class="rec-scroll" id="reconnectScroll">
+            <!-- Contact cards populated by JS -->
+          </div>
+        </section>
+
+        <!-- Live Now Section -->
+        <section class="rec-section">
+          <div class="rec-header">
+            <div>
+              <div class="rec-title">🔴 Live Now</div>
+              <div class="rec-subtitle">From people you follow</div>
+            </div>
+          </div>
+          <div class="rec-scroll" id="liveScroll">
+            <!-- Live cards populated by JS -->
+          </div>
+        </section>
+
+        <!-- Because You Follow Section -->
+        <section class="rec-section">
+          <div class="rec-header">
+            <div>
+              <div class="rec-title">Because you follow Sarah</div>
+              <div class="rec-subtitle">Content you might like</div>
+            </div>
+          </div>
+          <div class="rec-scroll" id="becauseScroll">
+            <!-- Recommendation cards populated by JS -->
+          </div>
+        </section>
+
+        <!-- Suggested Section -->
+        <section class="rec-section">
+          <div class="rec-header">
+            <div>
+              <div class="rec-title">Suggested for you</div>
+              <div class="rec-subtitle">New creators to discover</div>
+            </div>
+          </div>
+          <div class="rec-scroll" id="suggestedScroll">
+            <!-- Suggested cards populated by JS -->
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact Sheet -->
+  <div class="sheet-overlay" id="contactOverlay" onclick="closeContactSheet()"></div>
+  <div class="sheet" id="contactSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <img class="sheet-avatar" id="sheetAvatar" src="" alt="">
+      <div>
+        <div class="sheet-name" id="sheetName"></div>
+        <span class="sheet-tier" id="sheetTier"></span>
+      </div>
+    </div>
+    <div class="sheet-body">
+      <div class="sheet-stat-card">
+        <div class="sheet-stat-row">
+          <span class="sheet-stat-label">Connection Health</span>
+          <span class="sheet-stat-value" id="sheetHealth"></span>
+        </div>
+        <div class="sheet-health-bar">
+          <div class="sheet-health-fill" id="sheetHealthBar"></div>
+        </div>
+        <div class="sheet-stat-row">
+          <span class="sheet-stat-label">Last Contact</span>
+          <span class="sheet-stat-value" id="sheetLast"></span>
+        </div>
+        <div class="sheet-stat-row" style="margin-bottom:0">
+          <span class="sheet-stat-label">Reach out every</span>
+          <span class="sheet-stat-value" id="sheetFreq"></span>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="sheet-action-btn" id="sheetActionBtn" onclick="logContact()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <span id="sheetActionText">Log Contact</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Video Sheet -->
+  <div class="sheet-overlay" id="videoOverlay" onclick="closeVideoSheet()"></div>
+  <div class="sheet video-sheet" id="videoSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-video">
+      <iframe id="videoFrame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+    <div class="sheet-title" id="videoTitle"></div>
+    <div class="sheet-author">
+      <img id="videoAvatar" src="" alt="">
+      <div>
+        <div class="sheet-author-name" id="videoAuthor"></div>
+        <div class="sheet-author-meta" id="videoMeta"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drag hint -->
+  <div class="drag-hint" id="dragHint">Drag orbs to rearrange • Tap to expand</div>
+
+  <script>
+    // Platform icons
+    const icons = {
+      youtube: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>',
+      github: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>',
+      twitch: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>',
+      discord: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>',
+      strava: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>',
+      contacts: '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+    };
+
+    // Platform data
+    const platforms = [
+      { id: 'youtube', name: 'YouTube', active: true, x: 50, y: 80 },
+      { id: 'github', name: 'GitHub', active: true, x: 200, y: 150 },
+      { id: 'twitch', name: 'Twitch', active: true, x: 280, y: 280 },
+      { id: 'discord', name: 'Discord', active: false, x: 80, y: 320 },
+      { id: 'strava', name: 'Strava', active: false, x: 180, y: 400 },
+      { id: 'contacts', name: 'Contacts', active: true, x: 60, y: 200 }
+    ];
+
+    // Platform content
+    const platformContent = {
+      youtube: [
+        { title: 'Building AI Apps in 2024', author: 'Sarah Chen', thumb: 'https://picsum.photos/seed/yt1/100/100', live: false, time: '2 hours ago' },
+        { title: 'Live Coding Session', author: 'Mike Dev', thumb: 'https://picsum.photos/seed/yt2/100/100', live: true, time: '1.2K watching' },
+        { title: 'React Best Practices', author: 'Emma Wilson', thumb: 'https://picsum.photos/seed/yt3/100/100', live: false, time: '1 day ago' }
+      ],
+      github: [
+        { title: 'react-dashboard', author: 'Kyle Martinez', thumb: 'https://api.dicebear.com/7.x/avataaars/svg?seed=kyle', time: '3 commits today' },
+        { title: 'api-server', author: 'Alex Rivera', thumb: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex', time: 'PR opened' },
+        { title: 'mobile-app', author: 'Sarah Chen', thumb: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah', time: 'Issue closed' }
+      ],
+      twitch: [
+        { title: 'Late Night Coding', author: 'Sarah Chen', thumb: 'https://picsum.photos/seed/tw1/100/100', live: true, time: '2.4K viewers' },
+        { title: 'Gaming & Chill', author: 'Jake Thompson', thumb: 'https://picsum.photos/seed/tw2/100/100', live: true, time: '890 viewers' }
+      ],
+      contacts: [
+        { name: 'Mom', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mom&backgroundColor=ffdfbf', status: 'urgent', days: 5, freq: 3 },
+        { name: 'Dad', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dad&backgroundColor=c0aede', status: 'healthy', days: 1, freq: 3 },
+        { name: 'Bo Kim', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bokim&backgroundColor=d1d4f9', status: 'warning', days: 25, freq: 30 },
+        { name: 'Nana', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=nana&backgroundColor=ffd5dc', status: 'healthy', days: 10, freq: 30 },
+        { name: 'Johnson', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=johnson&backgroundColor=b6e3f4', status: 'healthy', days: 20, freq: 60 }
+      ]
+    };
+
+    // People data for sheet
+    const people = {
+      mom: { name: 'Mom', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mom&backgroundColor=ffdfbf', tier: 'Family', days: 5, freq: 3 },
+      dad: { name: 'Dad', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dad&backgroundColor=c0aede', tier: 'Family', days: 1, freq: 3 },
+      bo: { name: 'Bo Kim', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bokim&backgroundColor=d1d4f9', tier: 'Inner Circle', days: 25, freq: 30 },
+      nana: { name: 'Nana', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=nana&backgroundColor=ffd5dc', tier: 'Inner Circle', days: 10, freq: 30 },
+      johnson: { name: 'Johnson Anumah', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=johnson&backgroundColor=b6e3f4', tier: 'Inner Circle', days: 20, freq: 60 }
+    };
+
+    let currentPerson = null;
+    let expandedOrbs = new Set();
+
+    // Initialize orbs
+    function initOrbs() {
+      const canvas = document.getElementById('orbCanvas');
+      const canvasRect = canvas.getBoundingClientRect();
+
+      platforms.forEach(p => {
+        const orb = document.createElement('div');
+        orb.className = `orb ${p.id} ${p.active ? '' : 'inactive'}`;
+        orb.id = `orb-${p.id}`;
+        orb.style.left = `${p.x}px`;
+        orb.style.top = `${p.y}px`;
+
+        orb.innerHTML = `
+          <div class="orb-circle">
+            ${icons[p.id]}
+            <div class="orb-expanded-content">
+              <div class="orb-expanded-header">
+                <div class="orb-expanded-title">${icons[p.id]} ${p.name}</div>
+                <button class="orb-close" onclick="event.stopPropagation(); collapseOrb('${p.id}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </div>
+              <div class="orb-content-list" id="content-${p.id}"></div>
+            </div>
+          </div>
+          <div class="orb-label">${p.name}</div>
+        `;
+
+        canvas.appendChild(orb);
+        makeDraggable(orb, p);
+      });
+
+      // Show hint briefly
+      const hint = document.getElementById('dragHint');
+      setTimeout(() => hint.classList.add('show'), 1000);
+      setTimeout(() => hint.classList.remove('show'), 4000);
+    }
+
+    // Make orb draggable
+    function makeDraggable(el, platform) {
+      let isDragging = false;
+      let startX, startY, origX, origY;
+      let hasMoved = false;
+
+      el.addEventListener('touchstart', (e) => {
+        if (el.classList.contains('expanded')) return;
+        isDragging = true;
+        hasMoved = false;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        origX = el.offsetLeft;
+        origY = el.offsetTop;
+        el.style.zIndex = 100;
+        el.style.transition = 'none';
+      });
+
+      el.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+          hasMoved = true;
+        }
+
+        el.style.left = `${origX + dx}px`;
+        el.style.top = `${origY + dy}px`;
+      });
+
+      el.addEventListener('touchend', () => {
+        isDragging = false;
+        el.style.zIndex = el.classList.contains('expanded') ? 50 : 10;
+        el.style.transition = '';
+
+        if (!hasMoved && platform.active) {
+          toggleOrb(platform.id);
+        }
+      });
+
+      // Mouse support for desktop testing
+      el.addEventListener('click', (e) => {
+        if (platform.active && !hasMoved) {
+          toggleOrb(platform.id);
+        }
+      });
+    }
+
+    // Toggle orb expand/collapse
+    function toggleOrb(id) {
+      const orb = document.getElementById(`orb-${id}`);
+      if (orb.classList.contains('expanded')) {
+        collapseOrb(id);
+      } else {
+        expandOrb(id);
+      }
+    }
+
+    // Expand orb
+    function expandOrb(id) {
+      const orb = document.getElementById(`orb-${id}`);
+      orb.classList.add('expanded');
+      expandedOrbs.add(id);
+
+      // Populate content
+      const contentList = document.getElementById(`content-${id}`);
+      contentList.innerHTML = '';
+
+      if (id === 'contacts') {
+        platformContent.contacts.forEach(c => {
+          const item = document.createElement('div');
+          item.className = 'contact-item';
+          item.innerHTML = `
+            <img class="contact-avatar ${c.status}" src="${c.avatar}" alt="${c.name}">
+            <div class="contact-info">
+              <div class="contact-name">${c.name}</div>
+              <div class="contact-status ${c.status}">${c.days === 0 ? 'Today' : c.days + ' days ago'}${c.status === 'urgent' ? ' • Overdue!' : ''}</div>
+            </div>
+            <button class="contact-action" onclick="event.stopPropagation(); openContactSheet('${c.name.toLowerCase().split(' ')[0]}')">Call</button>
+          `;
+          contentList.appendChild(item);
+        });
+      } else if (platformContent[id]) {
+        platformContent[id].forEach(item => {
+          const el = document.createElement('div');
+          el.className = 'orb-content-item';
+          el.onclick = () => openVideoSheet(item);
+          el.innerHTML = `
+            <img class="orb-content-thumb ${id === 'github' ? 'avatar' : ''}" src="${item.thumb}" alt="">
+            <div class="orb-content-info">
+              <div class="orb-content-title">${item.title}</div>
+              <div class="orb-content-meta">${item.author} • ${item.time}</div>
+            </div>
+            ${item.live ? '<div class="live-dot"></div>' : ''}
+          `;
+          contentList.appendChild(el);
+        });
+      }
+    }
+
+    // Collapse orb
+    function collapseOrb(id) {
+      const orb = document.getElementById(`orb-${id}`);
+      orb.classList.remove('expanded');
+      expandedOrbs.delete(id);
+    }
+
+    // Switch tabs
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+
+      if (tab === 'discovery') {
+        document.querySelector('.tab:first-child').classList.add('active');
+        document.getElementById('discoveryPanel').classList.add('active');
+      } else {
+        document.querySelector('.tab:last-child').classList.add('active');
+        document.getElementById('recommendationsPanel').classList.add('active');
+      }
+    }
+
+    // Open contact sheet
+    function openContactSheet(id) {
+      const person = people[id];
+      if (!person) return;
+      currentPerson = id;
+
+      document.getElementById('sheetAvatar').src = person.avatar;
+      document.getElementById('sheetName').textContent = person.name;
+      document.getElementById('sheetTier').textContent = person.tier;
+
+      const isOverdue = person.days >= person.freq;
+      document.getElementById('sheetHealth').textContent = isOverdue ? 'Needs attention' : 'Healthy';
+      document.getElementById('sheetHealth').className = `sheet-stat-value ${isOverdue ? 'bad' : 'good'}`;
+
+      const healthPercent = Math.max(5, 100 - (person.days / person.freq) * 100);
+      const bar = document.getElementById('sheetHealthBar');
+      bar.style.width = healthPercent + '%';
+      bar.className = `sheet-health-fill ${isOverdue ? 'bad' : ''}`;
+
+      document.getElementById('sheetLast').textContent = person.days === 0 ? 'Today' : `${person.days} days ago`;
+      document.getElementById('sheetFreq').textContent = `${person.freq} days`;
+
+      document.getElementById('contactOverlay').classList.add('open');
+      document.getElementById('contactSheet').classList.add('open');
+    }
+
+    function closeContactSheet() {
+      document.getElementById('contactOverlay').classList.remove('open');
+      document.getElementById('contactSheet').classList.remove('open');
+    }
+
+    function logContact() {
+      const btn = document.getElementById('sheetActionBtn');
+      const text = document.getElementById('sheetActionText');
+      text.textContent = 'Logged!';
+      btn.classList.add('success');
+
+      if (currentPerson && people[currentPerson]) {
+        people[currentPerson].days = 0;
+      }
+
+      setTimeout(() => {
+        text.textContent = 'Log Contact';
+        btn.classList.remove('success');
+        closeContactSheet();
+      }, 1500);
+    }
+
+    // Video sheet
+    function openVideoSheet(item) {
+      document.getElementById('videoTitle').textContent = item.title;
+      document.getElementById('videoAuthor').textContent = item.author;
+      document.getElementById('videoAvatar').src = item.thumb;
+      document.getElementById('videoMeta').textContent = item.live ? 'Streaming now' : item.time;
+      document.getElementById('videoFrame').src = 'https://www.youtube.com/embed/dQw4w9WgXcQ';
+
+      document.getElementById('videoOverlay').classList.add('open');
+      document.getElementById('videoSheet').classList.add('open');
+    }
+
+    function closeVideoSheet() {
+      document.getElementById('videoOverlay').classList.remove('open');
+      document.getElementById('videoSheet').classList.remove('open');
+      document.getElementById('videoFrame').src = '';
+    }
+
+    // Populate recommendations
+    function populateRecommendations() {
+      // Reconnect
+      const reconnect = document.getElementById('reconnectScroll');
+      Object.entries(people).forEach(([id, p]) => {
+        const isUrgent = p.days >= p.freq;
+        reconnect.innerHTML += `
+          <div class="rec-contact-card ${isUrgent ? 'urgent' : ''}" onclick="openContactSheet('${id}')">
+            <img class="rec-contact-avatar" src="${p.avatar}" alt="${p.name}">
+            <div class="rec-contact-name">${p.name}</div>
+            <div class="rec-contact-status">${p.days === 0 ? 'Today' : p.days + ' days ago'}${isUrgent ? ' • Overdue' : ''}</div>
+          </div>
+        `;
+      });
+
+      // Live
+      const live = document.getElementById('liveScroll');
+      [
+        { title: 'Late Night Coding Session', author: 'Sarah Chen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah', viewers: '2.4K', thumb: 'https://picsum.photos/seed/live1/400/225', platform: 'twitch' },
+        { title: 'Weekly Tech News', author: 'Mike Torres', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike', viewers: '891', thumb: 'https://picsum.photos/seed/live2/400/225', platform: 'youtube' }
+      ].forEach(item => {
+        live.innerHTML += `
+          <div class="rec-card" onclick="openVideoSheet({title:'${item.title}',author:'${item.author}',thumb:'${item.avatar}',live:true,time:'${item.viewers} watching'})">
+            <div class="rec-card-thumb">
+              <img src="${item.thumb}" alt="">
+              <span class="rec-card-live">LIVE</span>
+              <div class="rec-card-platform" style="background:${item.platform === 'youtube' ? '#ff0000' : '#9146ff'}">${icons[item.platform]}</div>
+            </div>
+            <div class="rec-card-body">
+              <div class="rec-card-title">${item.title}</div>
+              <div class="rec-card-meta">
+                <img class="rec-card-avatar" src="${item.avatar}" alt="">
+                <span class="rec-card-author">${item.author}</span>
+                <span class="rec-card-time">${item.viewers} watching</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      // Because you follow
+      const because = document.getElementById('becauseScroll');
+      [
+        { title: 'Building AI Apps from Scratch', author: 'Sarah Chen', thumb: 'https://picsum.photos/seed/rec1/400/225', time: '2 hours ago' },
+        { title: 'My Home Office Setup 2024', author: 'Emma Wilson', thumb: 'https://picsum.photos/seed/rec2/400/225', time: '1 day ago' },
+        { title: 'React Performance Deep Dive', author: 'Kyle Martinez', thumb: 'https://picsum.photos/seed/rec3/400/225', time: '3 days ago' }
+      ].forEach(item => {
+        because.innerHTML += `
+          <div class="rec-card" onclick="openVideoSheet({title:'${item.title}',author:'${item.author}',thumb:'https://api.dicebear.com/7.x/avataaars/svg?seed=${item.author.split(' ')[0].toLowerCase()}',time:'${item.time}'})">
+            <div class="rec-card-thumb">
+              <img src="${item.thumb}" alt="">
+              <div class="rec-card-platform" style="background:#ff0000">${icons.youtube}</div>
+            </div>
+            <div class="rec-card-body">
+              <div class="rec-card-title">${item.title}</div>
+              <div class="rec-card-meta">
+                <img class="rec-card-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=${item.author.split(' ')[0].toLowerCase()}" alt="">
+                <span class="rec-card-author">${item.author}</span>
+                <span class="rec-card-time">${item.time}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      // Suggested
+      const suggested = document.getElementById('suggestedScroll');
+      [
+        { title: 'Design Systems Deep Dive', author: 'Design Weekly', thumb: 'https://picsum.photos/seed/sug1/400/225', time: '500K subscribers' },
+        { title: 'Startup Funding Explained', author: 'VC Insights', thumb: 'https://picsum.photos/seed/sug2/400/225', time: '120K subscribers' }
+      ].forEach(item => {
+        suggested.innerHTML += `
+          <div class="rec-card">
+            <div class="rec-card-thumb">
+              <img src="${item.thumb}" alt="">
+              <div class="rec-card-platform" style="background:#ff0000">${icons.youtube}</div>
+            </div>
+            <div class="rec-card-body">
+              <div class="rec-card-title">${item.title}</div>
+              <div class="rec-card-meta">
+                <img class="rec-card-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=${item.author.replace(' ','')}" alt="">
+                <span class="rec-card-author">${item.author}</span>
+                <span class="rec-card-time">${item.time}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Search placeholder
+    function openSearch() {
+      alert('Search coming soon! Try: "Who\'s streaming?" or "Show Kyle\'s commits"');
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+      initOrbs();
+      populateRecommendations();
+    });
+  </script>
+</body>
+</html>
