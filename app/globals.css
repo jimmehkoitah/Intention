@@ -171,3 +171,19 @@ body {
   0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
   50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.6); }
 }
+
+/* Horizontal card rows scroll, but without a visible scrollbar chrome. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* The app is a fixed-viewport mobile shell; only inner regions scroll. */
+html,
+body {
+  height: 100%;
+  overscroll-behavior: none;
+}

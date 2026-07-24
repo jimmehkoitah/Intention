@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
 
 // GET - Fetch all contacts for user
 export async function GET(request: NextRequest) {

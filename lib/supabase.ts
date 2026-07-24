@@ -1,15 +1,51 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// These clients are created lazily on purpose.
+//
+// Constructing them at module load meant `next build` crashed with
+// "supabaseUrl is required" whenever the environment wasn't configured, which
+// broke deploys and made the app impossible to ship as a demo. Nothing on the
+// demo path touches Supabase, so it must not be required in order to render.
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+let client: SupabaseClient | null = null
+let adminClient: SupabaseClient | null = null
 
-// Server-side client with service role for admin operations
-export const supabaseAdmin = createClient(
-  supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey
-)
+function requireEnv(name: string): string {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(
+      `${name} is not set. Add it to .env.local (see .env.example) to use Supabase-backed routes.`
+    )
+  }
+  return value
+}
+
+/** Anon-key client. Safe for user-scoped reads/writes under RLS. */
+export function getSupabase(): SupabaseClient {
+  if (!client) {
+    client = createClient(
+      requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    )
+  }
+  return client
+}
+
+/** Service-role client. Server-side only — never import into a client component. */
+export function getSupabaseAdmin(): SupabaseClient {
+  if (!adminClient) {
+    adminClient = createClient(
+      requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      process.env.SUPABASE_SERVICE_ROLE_KEY || requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    )
+  }
+  return adminClient
+}
+
+/** True when Supabase is configured, so routes can degrade instead of throwing. */
+export function isSupabaseConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+}
 
 // Types for database tables
 export interface Profile {

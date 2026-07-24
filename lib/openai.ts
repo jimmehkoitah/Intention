@@ -1,15 +1,33 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Constructed lazily for the same reason as the Supabase clients: instantiating
+// at module load threw "OPENAI_API_KEY is missing" during `next build` and broke
+// deploys. The AI routes are optional, so an unset key must not stop the app
+// from building or rendering.
+let client: OpenAI | null = null
+
+function getOpenAI(): OpenAI {
+  if (!client) {
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY is not set. AI search and summaries are disabled.')
+    }
+    client = new OpenAI({ apiKey })
+  }
+  return client
+}
+
+/** True when the AI routes can actually run. */
+export function isOpenAIConfigured(): boolean {
+  return Boolean(process.env.OPENAI_API_KEY)
+}
 
 export async function searchSignals(query: string, signals: any[]) {
   const signalSummary = signals.map(s =>
     `[${s.platform}] ${s.title} by ${s.contact_name || 'Unknown'} - ${s.signal_type}`
   ).join('\n')
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: 'gpt-4-turbo-preview',
     messages: [
       {
@@ -36,7 +54,7 @@ export async function summarizeSignals(signals: any[]) {
     `- [${s.platform}] ${s.title} (${s.signal_type})`
   ).join('\n')
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: 'gpt-4-turbo-preview',
     messages: [
       {
@@ -55,7 +73,7 @@ export async function summarizeSignals(signals: any[]) {
 }
 
 export async function generateContactSuggestion(contact: any, daysSinceContact: number) {
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: 'gpt-4-turbo-preview',
     messages: [
       {
@@ -73,5 +91,3 @@ export async function generateContactSuggestion(contact: any, daysSinceContact: 
 
   return response.choices[0].message.content
 }
-
-export default openai

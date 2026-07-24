@@ -1,224 +1,121 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Search, Settings, Bell, User } from 'lucide-react'
-import Constellation from '@/components/Constellation'
-import SignalFeed from '@/components/SignalFeed'
-import RelationshipNudges from '@/components/RelationshipNudges'
-import PinnedView from '@/components/PinnedView'
-import AISearch from '@/components/AISearch'
-import PersonDetailPanel from '@/components/PersonDetailPanel'
-import { Platform, MockSignal, MockPerson, MOCK_PEOPLE, MOCK_SIGNALS } from '@/lib/types'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search } from 'lucide-react'
+import OrbField from '@/components/mobile/OrbField'
+import ForYou from '@/components/mobile/ForYou'
+import PersonSheet from '@/components/mobile/PersonSheet'
+import { PEOPLE, Person, isOverdue } from '@/lib/demo-data'
+
+type Tab = 'discovery' | 'foryou'
 
 export default function Home() {
-  // State
-  const [connectedPlatforms, setConnectedPlatforms] = useState<Platform[]>(['youtube', 'github', 'twitch'])
-  const [activePlatforms, setActivePlatforms] = useState<Platform[]>([])
-  const [pinnedSignal, setPinnedSignal] = useState<MockSignal | null>(null)
-  const [selectedPerson, setSelectedPerson] = useState<MockPerson | null>(null)
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [people, setPeople] = useState<MockPerson[]>(MOCK_PEOPLE)
+  const [tab, setTab] = useState<Tab>('discovery')
+  const [people, setPeople] = useState<Person[]>(PEOPLE)
+  const [selected, setSelected] = useState<Person | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
 
-  // Keyboard shortcut for search
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        setIsSearchOpen(true)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
-  // Handlers
-  const handlePlatformClick = (platform: Platform) => {
-    setActivePlatforms(prev =>
-      prev.includes(platform)
-        ? prev.filter(p => p !== platform)
-        : [...prev, platform]
-    )
+  // Logging a contact resets the clock — the one piece of state that makes the
+  // demo feel alive rather than static.
+  const logContact = (id: string) => {
+    const person = people.find(p => p.id === id)
+    setPeople(prev => prev.map(p => (p.id === id ? { ...p, daysSince: 0 } : p)))
+    setToast(person ? `Logged — you're current with ${person.name}` : 'Logged')
+    setTimeout(() => setToast(null), 2600)
   }
 
-  const handleConnectPlatform = (platform: Platform) => {
-    // In production, this would redirect to OAuth flow
-    window.location.href = `/api/auth/${platform}`
-  }
-
-  const handlePinSignal = (signal: MockSignal) => {
-    setPinnedSignal(prev => (prev?.id === signal.id ? null : signal))
-  }
-
-  const handlePersonClick = (personId: string) => {
-    const person = people.find(p => p.id === personId)
-    if (person) setSelectedPerson(person)
-  }
-
-  const handleLogContact = (personId: string, method: string) => {
-    setPeople(prev =>
-      prev.map(p =>
-        p.id === personId
-          ? { ...p, lastContactAt: new Date() }
-          : p
-      )
-    )
-    // In production, this would also save to the database
-  }
-
-  const handleSearch = async (query: string): Promise<string> => {
-    // In production, this would call the AI search API
-    const response = await fetch('/api/ai/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, signals: MOCK_SIGNALS }),
-    })
-
-    if (!response.ok) {
-      // For demo, return a mock response
-      const liveCount = MOCK_SIGNALS.filter(s => s.isLive).length
-      return `Based on your network activity:\n\n• ${liveCount} people are live streaming right now\n• Your friends have posted ${MOCK_SIGNALS.length} updates recently\n• You should reach out to ${people.filter(p => {
-        const daysSince = p.lastContactAt ? Math.floor((Date.now() - p.lastContactAt.getTime()) / (1000 * 60 * 60 * 24)) : 999
-        return daysSince >= p.frequencyDays
-      }).length} contacts who need attention`
-    }
-
-    const data = await response.json()
-    return data.result
-  }
+  const overdueCount = people.filter(isOverdue).length
 
   return (
-    <div className="min-h-screen constellation-bg">
+    <div className="fixed inset-0 flex flex-col constellation-bg text-white">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 glass-dark">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
-              <span className="text-white text-sm font-bold">U</span>
+      <header className="shrink-0 px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 flex items-center justify-center">
+              <span className="text-white text-base font-bold">I</span>
             </div>
-            <span className="text-white font-semibold">UpKeep</span>
+            <span className="text-[22px] font-bold bg-gradient-to-r from-violet-400 to-sky-400 bg-clip-text text-transparent">
+              Intention
+            </span>
           </div>
-
-          {/* Search bar */}
           <button
-            onClick={() => setIsSearchOpen(true)}
-            className="flex items-center gap-3 px-4 py-2 rounded-full glass hover:bg-white/10 transition-colors"
+            className="w-10 h-10 rounded-full glass flex items-center justify-center"
+            aria-label="Search"
           >
-            <Search size={16} className="text-white/40" />
-            <span className="text-sm text-white/40">Search your network...</span>
-            <kbd className="hidden md:inline px-2 py-0.5 rounded bg-white/10 text-xs text-white/30">
-              ⌘K
-            </kbd>
+            <Search size={18} className="text-white/60" />
           </button>
+        </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
-              <Bell size={20} className="text-white/60" />
-            </button>
-            <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
-              <Settings size={20} className="text-white/60" />
-            </button>
-            <a
-              href="/integrations"
-              className="p-2 rounded-full hover:bg-white/10 transition-colors"
-            >
-              <User size={20} className="text-white/60" />
-            </a>
-          </div>
+        {/* Tabs */}
+        <div className="mt-3 grid grid-cols-2 gap-2.5">
+          {(['discovery', 'foryou'] as Tab[]).map(t => {
+            const active = tab === t
+            return (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`relative py-2.5 rounded-2xl text-[15px] font-semibold transition-colors ${
+                  active ? 'text-white' : 'text-white/50 bg-white/[0.05]'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="tab-pill"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    className="absolute inset-0 rounded-2xl bg-gradient-to-r from-violet-500 to-sky-500"
+                    style={{ boxShadow: '0 6px 22px rgba(139,92,246,0.45)' }}
+                  />
+                )}
+                <span className="relative flex items-center justify-center gap-1.5">
+                  {t === 'discovery' ? 'Discovery' : 'For You'}
+                  {t === 'foryou' && overdueCount > 0 && (
+                    <span
+                      className={`min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                        active ? 'bg-white/25 text-white' : 'bg-red-500 text-white'
+                      }`}
+                    >
+                      {overdueCount}
+                    </span>
+                  )}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </header>
 
-      {/* Main content */}
-      <main className={`pt-20 pb-8 px-4 transition-all duration-300 ${pinnedSignal ? 'mr-[40%]' : ''}`}>
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* Constellation */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
+      {/* Body */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={tab}
+          initial={{ opacity: 0, x: tab === 'discovery' ? -16 : 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          className="flex-1 flex flex-col min-h-0"
+        >
+          {tab === 'discovery'
+            ? <OrbField people={people} onPersonClick={setSelected} />
+            : <ForYou people={people} onPersonClick={setSelected} />}
+        </motion.div>
+      </AnimatePresence>
+
+      <PersonSheet person={selected} onClose={() => setSelected(null)} onLogContact={logContact} />
+
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            className="py-8"
+            exit={{ opacity: 0, y: 24 }}
+            className="fixed bottom-8 inset-x-4 z-[60] py-3 px-4 rounded-2xl bg-emerald-500 text-center text-[14px] font-semibold text-white shadow-lg"
           >
-            <Constellation
-              connectedPlatforms={connectedPlatforms}
-              activePlatforms={activePlatforms}
-              onPlatformClick={handlePlatformClick}
-              onPersonClick={handlePersonClick}
-              onConnectPlatform={handleConnectPlatform}
-            />
-          </motion.section>
-
-          {/* Platform filter pills */}
-          {activePlatforms.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-white/40">Showing:</span>
-              {activePlatforms.map(platform => (
-                <button
-                  key={platform}
-                  onClick={() => handlePlatformClick(platform)}
-                  className="px-3 py-1 rounded-full glass text-sm text-white/80 hover:bg-white/10 transition-colors"
-                >
-                  {platform} ×
-                </button>
-              ))}
-              <button
-                onClick={() => setActivePlatforms([])}
-                className="px-3 py-1 rounded-full text-sm text-white/40 hover:text-white/60 transition-colors"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
-
-          {/* Relationship Nudges */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <RelationshipNudges
-              people={people}
-              onContact={(person) => setSelectedPerson(person)}
-              onDismiss={(id) => console.log('Dismiss', id)}
-              onArchive={(id) => console.log('Archive', id)}
-            />
-          </motion.section>
-
-          {/* Signal Feed */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <SignalFeed
-              activePlatforms={activePlatforms}
-              onPinSignal={handlePinSignal}
-              pinnedSignalId={pinnedSignal?.id}
-            />
-          </motion.section>
-        </div>
-      </main>
-
-      {/* Pinned content panel */}
-      {pinnedSignal && (
-        <PinnedView signal={pinnedSignal} onClose={() => setPinnedSignal(null)} />
-      )}
-
-      {/* Person detail panel */}
-      {selectedPerson && (
-        <PersonDetailPanel
-          person={selectedPerson}
-          onClose={() => setSelectedPerson(null)}
-          onLogContact={handleLogContact}
-        />
-      )}
-
-      {/* AI Search modal */}
-      <AISearch
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onSearch={handleSearch}
-      />
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

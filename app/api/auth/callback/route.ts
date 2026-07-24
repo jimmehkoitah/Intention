@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { getSupabase } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Exchange code for session
-    const { data, error: authError } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error: authError } = await getSupabase().auth.exchangeCodeForSession(code)
 
     if (authError) {
       console.error('Auth error:', authError)
