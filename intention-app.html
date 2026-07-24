@@ -1,1440 +1,825 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Intention">
-  <meta name="theme-color" content="#0a0a12">
-  <title>Intention</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-    :root {
-      --bg: #08080c;
-      --bg-card: rgba(255,255,255,0.04);
-      --bg-card-hover: rgba(255,255,255,0.08);
-      --border: rgba(255,255,255,0.08);
-      --text: #ffffff;
-      --text-dim: rgba(255,255,255,0.6);
-      --text-muted: rgba(255,255,255,0.35);
-      --purple: #8b5cf6;
-      --cyan: #06b6d4;
-      --pink: #ec4899;
-      --green: #10b981;
-      --yellow: #f59e0b;
-      --red: #ef4444;
-      --youtube: #ff0000;
-      --github: #f0f0f0;
-      --twitch: #9146ff;
-      --discord: #5865f2;
-      --strava: #fc4c02;
-      --safe-top: env(safe-area-inset-top);
-      --safe-bottom: env(safe-area-inset-bottom);
-    }
-
-    html, body {
-      height: 100%;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    /* Ambient background */
-    .ambient {
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 100% 80% at 30% 120%, rgba(139,92,246,0.12) 0%, transparent 50%),
-        radial-gradient(ellipse 80% 60% at 80% -10%, rgba(6,182,212,0.08) 0%, transparent 50%),
-        radial-gradient(ellipse 60% 40% at 10% 30%, rgba(236,72,153,0.06) 0%, transparent 50%);
-      pointer-events: none;
-    }
-
-    /* App container */
-    .app {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding-top: max(12px, var(--safe-top));
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Header */
-    .header {
-      padding: 8px 20px 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo-mark {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--purple), var(--pink));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 15px;
-      box-shadow: 0 4px 20px rgba(139,92,246,0.4);
-    }
-
-    .logo-name {
-      font-size: 20px;
-      font-weight: 600;
-      background: linear-gradient(90deg, #a78bfa, var(--cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .icon-btn {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      border: none;
-      background: var(--bg-card);
-      color: var(--text-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .icon-btn:active {
-      transform: scale(0.92);
-      background: var(--bg-card-hover);
-    }
-
-    /* Tabs */
-    .tabs {
-      display: flex;
-      padding: 0 20px;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .tab {
-      flex: 1;
-      padding: 12px 16px;
-      border-radius: 14px;
-      border: none;
-      background: var(--bg-card);
-      color: var(--text-dim);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .tab::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, var(--purple), var(--cyan));
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    .tab.active {
-      color: white;
-      box-shadow: 0 4px 20px rgba(139,92,246,0.3);
-    }
-
-    .tab.active::before {
-      opacity: 1;
-    }
-
-    .tab span {
-      position: relative;
-      z-index: 1;
-    }
-
-    .tab:active {
-      transform: scale(0.97);
-    }
-
-    /* Main content area */
-    .content {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .panel {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s, transform 0.3s;
-      transform: translateX(20px);
-    }
-
-    .panel.active {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateX(0);
-    }
-
-    /* Discovery Panel */
-    .discovery {
-      padding: 0 20px;
-      padding-bottom: max(20px, var(--safe-bottom));
-      height: 100%;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .orb-canvas {
-      position: relative;
-      height: 100%;
-      width: 100%;
-    }
-
-    /* Platform Orbs */
-    .orb {
-      position: absolute;
-      cursor: grab;
-      transition: box-shadow 0.3s, transform 0.15s;
-      z-index: 10;
-      touch-action: none;
-    }
-
-    .orb:active {
-      cursor: grabbing;
-    }
-
-    .orb-circle {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .orb-circle::before {
-      content: '';
-      position: absolute;
-      inset: -3px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    .orb:active .orb-circle::before {
-      opacity: 1;
-    }
-
-    .orb-circle svg {
-      width: 28px;
-      height: 28px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .orb-label {
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      margin-top: 8px;
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--text-dim);
-      white-space: nowrap;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    .orb:active .orb-label,
-    .orb.expanded .orb-label {
-      opacity: 1;
-    }
-
-    /* Orb colors */
-    .orb.youtube .orb-circle { background: linear-gradient(135deg, #ff0000, #cc0000); box-shadow: 0 8px 30px rgba(255,0,0,0.35); }
-    .orb.github .orb-circle { background: linear-gradient(135deg, #333, #1a1a1a); box-shadow: 0 8px 30px rgba(255,255,255,0.15); }
-    .orb.twitch .orb-circle { background: linear-gradient(135deg, #9146ff, #6b2fb8); box-shadow: 0 8px 30px rgba(145,70,255,0.35); }
-    .orb.discord .orb-circle { background: linear-gradient(135deg, #5865f2, #4752c4); box-shadow: 0 8px 30px rgba(88,101,242,0.35); }
-    .orb.strava .orb-circle { background: linear-gradient(135deg, #fc4c02, #d43d00); box-shadow: 0 8px 30px rgba(252,76,2,0.35); }
-    .orb.contacts .orb-circle { background: linear-gradient(135deg, var(--green), #059669); box-shadow: 0 8px 30px rgba(16,185,129,0.35); }
-
-    .orb.inactive .orb-circle {
-      opacity: 0.35;
-      box-shadow: none;
-    }
-
-    /* Expanded orb */
-    .orb.expanded {
-      z-index: 50;
-    }
-
-    .orb.expanded .orb-circle {
-      width: 280px;
-      height: auto;
-      min-height: 200px;
-      border-radius: 24px;
-      flex-direction: column;
-      align-items: stretch;
-      padding: 16px;
-    }
-
-    .orb.expanded .orb-circle svg {
-      display: none;
-    }
-
-    .orb-expanded-content {
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      width: 100%;
-    }
-
-    .orb.expanded .orb-expanded-content {
-      display: flex;
-    }
-
-    .orb-expanded-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.15);
-    }
-
-    .orb-expanded-title {
-      font-size: 16px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .orb-expanded-title svg {
-      width: 20px;
-      height: 20px;
-      display: block !important;
-    }
-
-    .orb-close {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(255,255,255,0.15);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .orb-close:active {
-      background: rgba(255,255,255,0.25);
-    }
-
-    .orb-content-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-height: 250px;
-      overflow-y: auto;
-    }
-
-    .orb-content-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      background: rgba(0,0,0,0.25);
-      border-radius: 12px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .orb-content-item:active {
-      background: rgba(0,0,0,0.4);
-    }
-
-    .orb-content-thumb {
-      width: 48px;
-      height: 48px;
-      border-radius: 8px;
-      object-fit: cover;
-      background: rgba(0,0,0,0.3);
-    }
-
-    .orb-content-thumb.avatar {
-      border-radius: 50%;
-    }
-
-    .orb-content-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .orb-content-title {
-      font-size: 13px;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .orb-content-meta {
-      font-size: 11px;
-      color: rgba(255,255,255,0.6);
-      margin-top: 2px;
-    }
-
-    .live-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--red);
-      border-radius: 50%;
-      animation: livePulse 1.5s infinite;
-    }
-
-    @keyframes livePulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(1.2); }
-    }
-
-    /* Contacts orb specific */
-    .contact-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      background: rgba(0,0,0,0.25);
-      border-radius: 12px;
-    }
-
-    .contact-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: 2px solid;
-    }
-
-    .contact-avatar.urgent { border-color: var(--red); }
-    .contact-avatar.warning { border-color: var(--yellow); }
-    .contact-avatar.healthy { border-color: var(--green); }
-
-    .contact-info {
-      flex: 1;
-    }
-
-    .contact-name {
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    .contact-status {
-      font-size: 11px;
-      color: rgba(255,255,255,0.5);
-    }
-
-    .contact-status.urgent { color: var(--red); }
-
-    .contact-action {
-      padding: 6px 12px;
-      border-radius: 20px;
-      border: none;
-      background: rgba(255,255,255,0.15);
-      color: white;
-      font-size: 11px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    .contact-action:active {
-      background: rgba(255,255,255,0.25);
-    }
-
-    /* Recommendations Panel */
-    .recommendations {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      padding-bottom: max(20px, var(--safe-bottom));
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .rec-section {
-      padding: 0 20px;
-    }
-
-    .rec-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .rec-title {
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    .rec-subtitle {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .rec-see-all {
-      font-size: 13px;
-      color: var(--purple);
-      background: none;
-      border: none;
-      cursor: pointer;
-    }
-
-    /* Horizontal scroll container */
-    .rec-scroll {
-      display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      padding: 4px 0;
-      margin: 0 -20px;
-      padding-left: 20px;
-      padding-right: 20px;
-    }
-
-    .rec-scroll::-webkit-scrollbar {
-      display: none;
-    }
-
-    /* Recommendation cards */
-    .rec-card {
-      flex: 0 0 260px;
-      scroll-snap-align: start;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      overflow: hidden;
-      transition: all 0.3s;
-      cursor: pointer;
-    }
-
-    .rec-card:active {
-      transform: scale(0.97);
-    }
-
-    .rec-card-thumb {
-      aspect-ratio: 16/9;
-      background: var(--bg);
-      position: relative;
-    }
-
-    .rec-card-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .rec-card-live {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      padding: 4px 8px;
-      background: var(--red);
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .rec-card-platform {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .rec-card-platform svg {
-      width: 12px;
-      height: 12px;
-    }
-
-    .rec-card-body {
-      padding: 14px;
-    }
-
-    .rec-card-title {
-      font-size: 14px;
-      font-weight: 500;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
-
-    .rec-card-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .rec-card-avatar {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-    }
-
-    .rec-card-author {
-      font-size: 12px;
-      color: var(--text-dim);
-      flex: 1;
-    }
-
-    .rec-card-time {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    /* Contact recommendation cards */
-    .rec-contact-card {
-      flex: 0 0 140px;
-      scroll-snap-align: start;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .rec-contact-card:active {
-      transform: scale(0.97);
-    }
-
-    .rec-contact-card.urgent {
-      border-color: rgba(239,68,68,0.3);
-      background: rgba(239,68,68,0.08);
-    }
-
-    .rec-contact-avatar {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      border: 3px solid var(--green);
-      margin-bottom: 10px;
-    }
-
-    .rec-contact-card.urgent .rec-contact-avatar {
-      border-color: var(--red);
-      box-shadow: 0 0 20px rgba(239,68,68,0.4);
-    }
-
-    .rec-contact-name {
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .rec-contact-status {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .rec-contact-card.urgent .rec-contact-status {
-      color: var(--red);
-    }
-
-    /* Bottom sheet */
-    .sheet-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
-    }
-
-    .sheet-overlay.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .sheet {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #121218;
-      border-radius: 28px 28px 0 0;
-      z-index: 101;
-      transform: translateY(100%);
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      max-height: 85vh;
-      display: flex;
-      flex-direction: column;
-      padding-bottom: max(20px, var(--safe-bottom));
-    }
-
-    .sheet.open {
-      transform: translateY(0);
-    }
-
-    .sheet-handle {
-      width: 40px;
-      height: 5px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 3px;
-      margin: 12px auto;
-    }
-
-    .sheet-header {
-      padding: 0 24px 20px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .sheet-avatar {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      border: 3px solid var(--purple);
-    }
-
-    .sheet-name {
-      font-size: 22px;
-      font-weight: 600;
-    }
-
-    .sheet-tier {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      margin-top: 4px;
-      background: rgba(139,92,246,0.2);
-      color: #a78bfa;
-    }
-
-    .sheet-body {
-      padding: 0 24px 24px;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    .sheet-stat-card {
-      background: var(--bg-card);
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-
-    .sheet-stat-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .sheet-stat-label {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    .sheet-stat-value {
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .sheet-stat-value.good { color: var(--green); }
-    .sheet-stat-value.bad { color: var(--red); }
-
-    .sheet-health-bar {
-      height: 8px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-
-    .sheet-health-fill {
-      height: 100%;
-      border-radius: 4px;
-      background: linear-gradient(90deg, var(--green), var(--cyan));
-      transition: width 0.5s;
-    }
-
-    .sheet-health-fill.bad {
-      background: linear-gradient(90deg, var(--red), var(--pink));
-    }
-
-    .sheet-footer {
-      padding: 0 24px;
-    }
-
-    .sheet-action-btn {
-      width: 100%;
-      padding: 16px;
-      border-radius: 16px;
-      border: none;
-      background: linear-gradient(135deg, var(--purple), var(--pink));
-      color: white;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 8px 30px rgba(139,92,246,0.4);
-      transition: all 0.2s;
-    }
-
-    .sheet-action-btn:active {
-      transform: scale(0.98);
-    }
-
-    .sheet-action-btn.success {
-      background: linear-gradient(135deg, var(--green), var(--cyan));
-      box-shadow: 0 8px 30px rgba(16,185,129,0.4);
-    }
-
-    /* Video sheet */
-    .video-sheet .sheet-video {
-      aspect-ratio: 16/9;
-      background: black;
-      margin: 0 -24px;
-      margin-bottom: 16px;
-    }
-
-    .video-sheet .sheet-video iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-
-    .video-sheet .sheet-title {
-      font-size: 17px;
-      font-weight: 600;
-      margin-bottom: 12px;
-      padding: 0 24px;
-    }
-
-    .video-sheet .sheet-author {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 24px;
-    }
-
-    .video-sheet .sheet-author img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-    }
-
-    .video-sheet .sheet-author-name {
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .video-sheet .sheet-author-meta {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    /* Floating indicator */
-    .drag-hint {
-      position: fixed;
-      bottom: max(100px, calc(var(--safe-bottom) + 80px));
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 20px;
-      background: rgba(0,0,0,0.8);
-      border-radius: 20px;
-      font-size: 13px;
-      color: var(--text-dim);
-      opacity: 0;
-      transition: opacity 0.3s;
-      pointer-events: none;
-    }
-
-    .drag-hint.show {
-      opacity: 1;
-    }
-  </style>
-</head>
-<body>
-  <div class="ambient"></div>
-
-  <div class="app">
-    <!-- Header -->
-    <header class="header">
-      <div class="logo">
-        <div class="logo-mark">I</div>
-        <span class="logo-name">Intention</span>
+<title>Intention</title>
+
+<style>
+  :root {
+    --ground: #08080c;
+    --surface: #14141c;
+    --surface-2: #1c1c26;
+    --hairline: rgba(255, 255, 255, 0.09);
+    --ink: #ffffff;
+    --ink-2: rgba(255, 255, 255, 0.58);
+    --ink-3: rgba(255, 255, 255, 0.34);
+    --violet: #8b5cf6;
+    --sky: #38bdf8;
+    --overdue: #f0525f;
+    --current: #10b981;
+    --milestone: #f2b544;
+    --yt: #ff0000;
+    --tw: #9146ff;
+    --gh: #e8e8ee;
+    --dc: #5865f2;
+    --st: #fc4c02;
+    --sys: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    margin: 0;
+    background: #040407;
+    color: var(--ink);
+    font-family: var(--sys);
+    overscroll-behavior: none;
+  }
+
+  /* On a desktop viewport, present the app inside a phone-sized frame so it
+     reads as what it is rather than a stretched web page. */
+  .stage {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .device {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    max-width: none;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 22% 18%, rgba(139, 92, 246, 0.20) 0%, transparent 55%),
+      radial-gradient(ellipse at 82% 72%, rgba(56, 189, 248, 0.13) 0%, transparent 55%),
+      var(--ground);
+    display: flex;
+    flex-direction: column;
+  }
+
+  @media (min-width: 520px) {
+    .stage { padding: 28px; }
+    .device {
+      width: 390px;
+      height: 844px;
+      max-height: calc(100vh - 56px);
+      border-radius: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 40px 90px rgba(0, 0, 0, 0.7);
+    }
+  }
+
+  /* ---------------------------------------------------------------- header */
+  header {
+    flex: none;
+    padding: max(14px, env(safe-area-inset-top)) 16px 8px;
+  }
+
+  .bar { display: flex; align-items: center; justify-content: space-between; }
+
+  .brand { display: flex; align-items: center; gap: 10px; }
+
+  .mark {
+    width: 36px; height: 36px; border-radius: 11px;
+    background: linear-gradient(135deg, #d946ef, var(--violet));
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 17px;
+  }
+
+  .wordmark {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #a78bfa, var(--sky));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 999px;
+    border: 1px solid var(--hairline);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--ink-2);
+    display: grid; place-items: center; cursor: pointer;
+  }
+
+  /* Segmented control */
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+
+  .tab {
+    position: relative; padding: 11px 0; border: 0; border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--ink-3);
+    font: 600 15px var(--sys); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    transition: color .18s ease;
+  }
+
+  .tab[aria-selected="true"] {
+    color: var(--ink);
+    background: linear-gradient(90deg, var(--violet), var(--sky));
+    box-shadow: 0 6px 22px rgba(139, 92, 246, 0.42);
+  }
+
+  .tab:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+
+  .count {
+    min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px;
+    background: var(--overdue); color: #fff;
+    font: 700 11px var(--sys); font-variant-numeric: tabular-nums;
+    display: grid; place-items: center;
+  }
+
+  .tab[aria-selected="true"] .count { background: rgba(255, 255, 255, 0.26); }
+
+  /* ------------------------------------------------------------ orb field */
+  .body { flex: 1; min-height: 0; position: relative; }
+
+  .field { position: absolute; inset: 0; overflow: hidden; }
+
+  .orb {
+    position: absolute; width: 76px; height: 76px; border-radius: 999px;
+    border: 0; display: grid; place-items: center;
+    cursor: grab; touch-action: none;
+    transition: transform .22s cubic-bezier(.34, 1.4, .5, 1);
+  }
+
+  .orb:active { cursor: grabbing; }
+  .orb.open { transform: scale(.84); }
+  .orb:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+  .orb .pip {
+    position: absolute; top: -3px; right: -3px;
+    min-width: 22px; height: 22px; padding: 0 5px; border-radius: 999px;
+    background: #fff; font: 700 11px var(--sys); font-variant-numeric: tabular-nums;
+    display: grid; place-items: center;
+  }
+
+  .panel {
+    position: absolute; width: 258px; border-radius: 18px;
+    background: rgba(20, 20, 28, 0.96);
+    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+    border: 1px solid var(--hairline);
+    overflow: hidden;
+    animation: pop .22s cubic-bezier(.34, 1.3, .5, 1);
+  }
+
+  @keyframes pop { from { opacity: 0; transform: scale(.92) translateY(-6px); } }
+
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 12px; border-bottom: 1px solid var(--hairline);
+    font: 600 14px var(--sys);
+  }
+
+  .panel-body { padding: 8px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+
+  .x { border: 0; background: none; color: var(--ink-2); cursor: pointer; padding: 3px; line-height: 0; border-radius: 999px; }
+  .x:hover { background: rgba(255, 255, 255, 0.1); }
+
+  .row {
+    display: flex; gap: 10px; align-items: center; width: 100%;
+    padding: 8px; border-radius: 13px; border: 0;
+    background: rgba(255, 255, 255, 0.045);
+    color: var(--ink); text-align: left; font-family: var(--sys); cursor: pointer;
+  }
+
+  .row:hover { background: rgba(255, 255, 255, 0.08); }
+  .row img { width: 36px; height: 36px; border-radius: 999px; flex: none; }
+  .row .t { font-size: 13px; font-weight: 500; line-height: 1.3; }
+  .row .s { font-size: 11px; color: var(--ink-3); }
+  .row .meta { font-size: 11px; margin-top: 1px; display: flex; align-items: center; gap: 4px; }
+  .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .grow { min-width: 0; flex: 1; }
+
+  .hint {
+    position: absolute; bottom: 12px; left: 0; right: 0; text-align: center;
+    font-size: 11px; color: var(--ink-3); pointer-events: none;
+  }
+
+  /* -------------------------------------------------------------- for you */
+  .feed { position: absolute; inset: 0; overflow-y: auto; padding-bottom: 24px; }
+
+  section { margin-top: 20px; }
+  section:first-child { margin-top: 10px; }
+
+  .head { padding: 0 16px; }
+  .head h2 {
+    margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .head p { margin: 2px 0 0; font-size: 12px; color: var(--ink-3); }
+
+  .rail {
+    display: flex; gap: 12px; overflow-x: auto; padding: 10px 16px 4px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail > * { scroll-snap-align: start; flex: none; }
+
+  .who {
+    width: 132px; padding: 12px; border-radius: 18px; cursor: pointer;
+    border: 1px solid var(--hairline); background: rgba(255, 255, 255, 0.04);
+    color: var(--ink); font-family: var(--sys); text-align: center;
+  }
+  .who.od { border-color: rgba(240, 82, 95, 0.45); background: rgba(240, 82, 95, 0.10); }
+  .who img { width: 56px; height: 56px; border-radius: 999px; }
+  .who .n { margin-top: 8px; font-size: 14px; font-weight: 600; }
+  .who .d { font-size: 11px; color: var(--ink-3); }
+  .who.od .d { color: var(--overdue); }
+  .who .flag { font-size: 11px; font-weight: 600; color: var(--overdue); }
+
+  .milestone {
+    width: 288px; padding: 12px; border-radius: 18px; cursor: pointer;
+    border: 1px solid rgba(242, 181, 68, 0.34); background: rgba(242, 181, 68, 0.08);
+    color: var(--ink); font-family: var(--sys); text-align: left;
+  }
+  .milestone .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--milestone);
+  }
+  .milestone .t { font-size: 15px; font-weight: 600; margin-top: 2px; }
+  .milestone .s { font-size: 12px; color: var(--ink-2); }
+  .milestone .cta { margin-top: 10px; font-size: 12px; font-weight: 600; color: var(--milestone); }
+
+  .presence {
+    width: 244px; padding: 13px; border-radius: 18px;
+    border: 1px solid rgba(88, 101, 242, 0.42); background: rgba(88, 101, 242, 0.10);
+  }
+  .presence .t { font-size: 14px; font-weight: 600; }
+  .presence .s { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .stack { display: flex; margin-top: 10px; }
+  .stack img {
+    width: 28px; height: 28px; border-radius: 999px;
+    border: 2px solid var(--surface); margin-left: -8px;
+  }
+  .stack img:first-child { margin-left: 0; }
+
+  .card {
+    width: 236px; border-radius: 18px; overflow: hidden;
+    border: 1px solid var(--hairline); background: rgba(255, 255, 255, 0.04);
+  }
+  .card .thumb { position: relative; aspect-ratio: 16 / 9; }
+  .card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .pad { padding: 10px; }
+  .card .t { font-size: 13px; font-weight: 500; line-height: 1.34; }
+  .card .foot { display: flex; align-items: center; gap: 6px; margin-top: 7px; }
+  .card .foot img { width: 20px; height: 20px; border-radius: 999px; }
+  .card .foot span { font-size: 11px; color: var(--ink-3); }
+
+  .live {
+    position: absolute; top: 8px; left: 8px;
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 7px; border-radius: 7px; background: var(--overdue);
+    font: 700 10px var(--sys); letter-spacing: 0.04em;
+  }
+  .badge {
+    position: absolute; top: 8px; right: 8px;
+    width: 24px; height: 24px; border-radius: 999px;
+    display: grid; place-items: center; font: 700 10px var(--sys);
+  }
+
+  /* ---------------------------------------------------------------- sheet */
+  .scrim {
+    position: absolute; inset: 0; z-index: 40;
+    background: rgba(0, 0, 0, 0.62);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+    animation: fade .2s ease;
+  }
+  @keyframes fade { from { opacity: 0; } }
+
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 50;
+    border-radius: 26px 26px 0 0;
+    border-top: 1px solid var(--hairline);
+    background: var(--surface);
+    padding: 10px 20px max(22px, env(safe-area-inset-bottom));
+    animation: rise .28s cubic-bezier(.2, .9, .3, 1);
+  }
+  @keyframes rise { from { transform: translateY(100%); } }
+
+  .grip { width: 40px; height: 4px; border-radius: 999px; background: rgba(255,255,255,.22); margin: 0 auto 16px; }
+
+  .who-row { display: flex; gap: 14px; align-items: center; }
+  .who-row img { width: 64px; height: 64px; border-radius: 999px; }
+  .who-row h3 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .who-row .tier { font-size: 13px; color: var(--ink-3); }
+
+  .chips { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .chip { padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; }
+
+  .meter-label { display: flex; justify-content: space-between; font-size: 12px; margin: 20px 0 6px; }
+  .meter { height: 6px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .meter i { display: block; height: 100%; border-radius: 999px; transition: width .45s ease; }
+  .cadence { font-size: 12px; color: var(--ink-3); margin-top: 7px; }
+
+  .note {
+    margin-top: 15px; padding: 12px; border-radius: 13px;
+    background: rgba(255, 255, 255, 0.045);
+    font-size: 13px; color: var(--ink-2); font-style: italic;
+  }
+
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+  .act {
+    padding: 12px; border-radius: 13px; border: 0;
+    background: rgba(255, 255, 255, 0.07); color: var(--ink);
+    font: 500 14px var(--sys); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .act:hover { background: rgba(255, 255, 255, 0.11); }
+
+  .primary {
+    width: 100%; margin-top: 10px; padding: 14px; border-radius: 13px; border: 0;
+    background: var(--current); color: #fff;
+    font: 600 15px var(--sys); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .primary:active { transform: scale(.985); }
+
+  .toast {
+    position: absolute; left: 16px; right: 16px; bottom: 30px; z-index: 60;
+    padding: 13px; border-radius: 16px; background: var(--current);
+    font: 600 14px var(--sys); text-align: center;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+    animation: rise-t .26s cubic-bezier(.2, .9, .3, 1);
+  }
+  @keyframes rise-t { from { opacity: 0; transform: translateY(20px); } }
+
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+
+<div class="stage">
+  <div class="device" id="device">
+    <header>
+      <div class="bar">
+        <div class="brand">
+          <div class="mark">I</div>
+          <div class="wordmark">Intention</div>
+        </div>
+        <button class="icon-btn" aria-label="Search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </button>
       </div>
-      <div class="header-actions">
-        <button class="icon-btn" onclick="openSearch()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tab-discovery" aria-selected="true">Discovery</button>
+        <button class="tab" role="tab" id="tab-foryou" aria-selected="false">
+          For You <span class="count" id="odcount">0</span>
         </button>
       </div>
     </header>
 
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('discovery')"><span>Discovery</span></button>
-      <button class="tab" onclick="switchTab('recommendations')"><span>For You</span></button>
-    </div>
-
-    <!-- Content -->
-    <div class="content">
-      <!-- Discovery Panel -->
-      <div class="panel discovery active" id="discoveryPanel">
-        <div class="orb-canvas" id="orbCanvas">
-          <!-- Orbs will be positioned here -->
-        </div>
-      </div>
-
-      <!-- Recommendations Panel -->
-      <div class="panel recommendations" id="recommendationsPanel">
-
-        <!-- Reconnect Section -->
-        <section class="rec-section">
-          <div class="rec-header">
-            <div>
-              <div class="rec-title">Reconnect</div>
-              <div class="rec-subtitle">People you should reach out to</div>
-            </div>
-          </div>
-          <div class="rec-scroll" id="reconnectScroll">
-            <!-- Contact cards populated by JS -->
-          </div>
-        </section>
-
-        <!-- Live Now Section -->
-        <section class="rec-section">
-          <div class="rec-header">
-            <div>
-              <div class="rec-title">🔴 Live Now</div>
-              <div class="rec-subtitle">From people you follow</div>
-            </div>
-          </div>
-          <div class="rec-scroll" id="liveScroll">
-            <!-- Live cards populated by JS -->
-          </div>
-        </section>
-
-        <!-- Because You Follow Section -->
-        <section class="rec-section">
-          <div class="rec-header">
-            <div>
-              <div class="rec-title">Because you follow Sarah</div>
-              <div class="rec-subtitle">Content you might like</div>
-            </div>
-          </div>
-          <div class="rec-scroll" id="becauseScroll">
-            <!-- Recommendation cards populated by JS -->
-          </div>
-        </section>
-
-        <!-- Suggested Section -->
-        <section class="rec-section">
-          <div class="rec-header">
-            <div>
-              <div class="rec-title">Suggested for you</div>
-              <div class="rec-subtitle">New creators to discover</div>
-            </div>
-          </div>
-          <div class="rec-scroll" id="suggestedScroll">
-            <!-- Suggested cards populated by JS -->
-          </div>
-        </section>
-
-      </div>
+    <div class="body">
+      <div class="field" id="field"></div>
+      <div class="feed" id="feed" hidden></div>
     </div>
   </div>
+</div>
 
-  <!-- Contact Sheet -->
-  <div class="sheet-overlay" id="contactOverlay" onclick="closeContactSheet()"></div>
-  <div class="sheet" id="contactSheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-header">
-      <img class="sheet-avatar" id="sheetAvatar" src="" alt="">
-      <div>
-        <div class="sheet-name" id="sheetName"></div>
-        <span class="sheet-tier" id="sheetTier"></span>
-      </div>
-    </div>
-    <div class="sheet-body">
-      <div class="sheet-stat-card">
-        <div class="sheet-stat-row">
-          <span class="sheet-stat-label">Connection Health</span>
-          <span class="sheet-stat-value" id="sheetHealth"></span>
-        </div>
-        <div class="sheet-health-bar">
-          <div class="sheet-health-fill" id="sheetHealthBar"></div>
-        </div>
-        <div class="sheet-stat-row">
-          <span class="sheet-stat-label">Last Contact</span>
-          <span class="sheet-stat-value" id="sheetLast"></span>
-        </div>
-        <div class="sheet-stat-row" style="margin-bottom:0">
-          <span class="sheet-stat-label">Reach out every</span>
-          <span class="sheet-stat-value" id="sheetFreq"></span>
-        </div>
-      </div>
-    </div>
-    <div class="sheet-footer">
-      <button class="sheet-action-btn" id="sheetActionBtn" onclick="logContact()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        <span id="sheetActionText">Log Contact</span>
-      </button>
-    </div>
-  </div>
+<script>
+/* ============================================================== demo data ==
+   Everything below is fabricated. Avatars and thumbnails are generated as
+   inline SVG, so this file has no external dependencies and renders the same
+   offline as it does online.
+   ========================================================================= */
 
-  <!-- Video Sheet -->
-  <div class="sheet-overlay" id="videoOverlay" onclick="closeVideoSheet()"></div>
-  <div class="sheet video-sheet" id="videoSheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-video">
-      <iframe id="videoFrame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-    </div>
-    <div class="sheet-title" id="videoTitle"></div>
-    <div class="sheet-author">
-      <img id="videoAvatar" src="" alt="">
-      <div>
-        <div class="sheet-author-name" id="videoAuthor"></div>
-        <div class="sheet-author-meta" id="videoMeta"></div>
-      </div>
-    </div>
-  </div>
+var PLATFORMS = {
+  contacts: { name: 'People',  color: '#10b981', fx: 0.28, fy: 0.48 },
+  youtube:  { name: 'YouTube', color: '#ff0000', fx: 0.26, fy: 0.16 },
+  github:   { name: 'GitHub',  color: '#1c1c22', fx: 0.66, fy: 0.30 },
+  twitch:   { name: 'Twitch',  color: '#9146ff', fx: 0.82, fy: 0.60 },
+  discord:  { name: 'Discord', color: '#5865f2', fx: 0.33, fy: 0.73 },
+  strava:   { name: 'Strava',  color: '#fc4c02', fx: 0.62, fy: 0.88 }
+};
+var ORDER = ['youtube', 'github', 'contacts', 'twitch', 'discord', 'strava'];
 
-  <!-- Drag hint -->
-  <div class="drag-hint" id="dragHint">Drag orbs to rearrange • Tap to expand</div>
+var ICONS = {
+  contacts: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>',
+  youtube:  '<path d="M22.5 6.4a2.8 2.8 0 0 0-2-2C18.8 4 12 4 12 4s-6.8 0-8.5.4a2.8 2.8 0 0 0-2 2A29 29 0 0 0 1.2 12a29 29 0 0 0 .4 5.6 2.8 2.8 0 0 0 2 2C5.2 20 12 20 12 20s6.8 0 8.5-.4a2.8 2.8 0 0 0 2-2 29 29 0 0 0 .4-5.6 29 29 0 0 0-.4-5.6z"/><path d="M10 15.1 15.2 12 10 8.9z" fill="#fff" stroke="none"/>',
+  github:   '<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 0 0-.9-2.6c3-.3 6.2-1.5 6.2-6.7A5.2 5.2 0 0 0 20 4.8a4.9 4.9 0 0 0-.1-3.6s-1.1-.4-3.7 1.4a12.7 12.7 0 0 0-6.8 0C6.8.8 5.7 1.2 5.7 1.2A4.9 4.9 0 0 0 5.6 4.8a5.2 5.2 0 0 0-1.4 3.6c0 5.2 3.1 6.4 6.1 6.7a3.4 3.4 0 0 0-.9 2.6V22"/>',
+  twitch:   '<path d="M4 2h16v11l-4 4h-4l-3 3H7v-3H4z"/><path d="M11 7v4M15 7v4" stroke="#fff" stroke-width="2"/>',
+  discord:  '<path d="M20 4.5A18 18 0 0 0 15.6 3l-.3.5a15 15 0 0 1 3.9 1.9 14 14 0 0 0-12.4 0A15 15 0 0 1 10.7 3.5L10.4 3A18 18 0 0 0 6 4.5C2.6 9.4 1.7 14.2 2.1 18.9A18 18 0 0 0 7.6 21l1-1.6a11 11 0 0 1-1.9-.9l.5-.4a12.8 12.8 0 0 0 11.6 0l.5.4a11 11 0 0 1-1.9.9l1 1.6a18 18 0 0 0 5.5-2.1c.5-5.4-.9-10.2-3.9-14.3z"/><circle cx="9" cy="13" r="1.6" fill="#fff" stroke="none"/><circle cx="15" cy="13" r="1.6" fill="#fff" stroke="none"/>',
+  strava:   '<path d="M9 3 3 15h3.6L9 10.3 11.4 15H15z"/><path d="M15 15l-1.8 3.5L11.4 15H9l4.2 8 4.2-8z"/>'
+};
 
-  <script>
-    // Platform icons
-    const icons = {
-      youtube: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>',
-      github: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>',
-      twitch: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>',
-      discord: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>',
-      strava: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>',
-      contacts: '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
-    };
+var PEOPLE = [
+  { id: 'p1', name: 'Mom',             tier: 'Inner circle',  cadence: 3,  days: 6,  method: 'call', platforms: [], note: 'Ask about the garden.' },
+  { id: 'p2', name: 'Dad',             tier: 'Inner circle',  cadence: 3,  days: 1,  method: 'call', platforms: [] },
+  { id: 'p3', name: 'Nana',            tier: 'Inner circle',  cadence: 21, days: 25, method: 'call', platforms: [], note: 'She prefers Sunday afternoons.' },
+  { id: 'p4', name: 'Bo Kim',          tier: 'Close friend',  cadence: 30, days: 12, method: 'text', platforms: ['strava', 'discord'] },
+  { id: 'p5', name: 'Johnson Anumah',  tier: 'Close friend',  cadence: 60, days: 71, method: 'text', platforms: ['github', 'discord'] },
+  { id: 'p6', name: 'Maya Rodriguez',  tier: 'Close friend',  cadence: 14, days: 9,  method: 'text', platforms: ['discord'] },
+  { id: 'p7', name: 'Chris Okafor',    tier: 'Keep warm',     cadence: 45, days: 44, method: 'DM',   platforms: ['twitch', 'discord'] },
+  { id: 'p8', name: 'Aunt Rose',       tier: 'Keep warm',     cadence: 60, days: 38, method: 'call', platforms: [] },
+  { id: 'p9', name: 'Devin Park',      tier: 'Close friend',  cadence: 30, days: 33, method: 'text', platforms: ['github', 'strava'] }
+];
 
-    // Platform data
-    const platforms = [
-      { id: 'youtube', name: 'YouTube', active: true, x: 50, y: 80 },
-      { id: 'github', name: 'GitHub', active: true, x: 200, y: 150 },
-      { id: 'twitch', name: 'Twitch', active: true, x: 280, y: 280 },
-      { id: 'discord', name: 'Discord', active: false, x: 80, y: 320 },
-      { id: 'strava', name: 'Strava', active: false, x: 180, y: 400 },
-      { id: 'contacts', name: 'Contacts', active: true, x: 60, y: 200 }
-    ];
+var SIGNALS = [
+  { id: 's1',  platform: 'strava',  title: 'Chicago Marathon — 26.2 mi', sub: 'First marathon · 4:12:38', author: 'Bo Kim',        personId: 'p4', when: '3h ago',        milestone: true },
+  { id: 's2',  platform: 'twitch',  title: 'Late night shader golf',          sub: 'Creative',                    author: 'Sarah Chen',    live: true, viewers: 2417, when: 'Live now' },
+  { id: 's3',  platform: 'twitch',  title: 'Ranked grind w/ chat',            sub: 'Valorant',                    author: 'Chris Okafor',  personId: 'p7', live: true, viewers: 634, when: 'Live now' },
+  { id: 's4',  platform: 'discord', title: '4 friends in General',            sub: 'Maya, Bo, Chris +1 · 38 min', author: 'The Backroom', when: 'Now', presence: true },
+  { id: 's5',  platform: 'github',  title: 'PR #218 · Rewrite the sync engine', sub: 'Opened · needs review', author: 'Johnson Anumah', personId: 'p5', when: '5h ago' },
+  { id: 's6',  platform: 'youtube', title: 'I rebuilt my studio in a weekend', sub: '18:04',                      author: 'Emma Wilson',   when: 'Yesterday' },
+  { id: 's7',  platform: 'strava',  title: 'Morning run — 6.1 mi',       sub: 'Negative split · 7:48/mi', author: 'Devin Park',  personId: 'p9', when: 'Yesterday' },
+  { id: 's8',  platform: 'youtube', title: 'Why your database is slow',       sub: '24:11',                       author: 'Mike Torres',   when: '2 days ago' },
+  { id: 's9',  platform: 'github',  title: 'feat: offline-first cache layer', sub: '7 commits · intention',  author: 'Devin Park',    personId: 'p9', when: '2 days ago' },
+  { id: 's10', platform: 'twitch',  title: 'Sunday co-working',               sub: 'Software & Dev',              author: 'Sarah Chen',    when: 'You missed this' }
+];
 
-    // Platform content
-    const platformContent = {
-      youtube: [
-        { title: 'Building AI Apps in 2024', author: 'Sarah Chen', thumb: 'https://picsum.photos/seed/yt1/100/100', live: false, time: '2 hours ago' },
-        { title: 'Live Coding Session', author: 'Mike Dev', thumb: 'https://picsum.photos/seed/yt2/100/100', live: true, time: '1.2K watching' },
-        { title: 'React Best Practices', author: 'Emma Wilson', thumb: 'https://picsum.photos/seed/yt3/100/100', live: false, time: '1 day ago' }
-      ],
-      github: [
-        { title: 'react-dashboard', author: 'Kyle Martinez', thumb: 'https://api.dicebear.com/7.x/avataaars/svg?seed=kyle', time: '3 commits today' },
-        { title: 'api-server', author: 'Alex Rivera', thumb: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex', time: 'PR opened' },
-        { title: 'mobile-app', author: 'Sarah Chen', thumb: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah', time: 'Issue closed' }
-      ],
-      twitch: [
-        { title: 'Late Night Coding', author: 'Sarah Chen', thumb: 'https://picsum.photos/seed/tw1/100/100', live: true, time: '2.4K viewers' },
-        { title: 'Gaming & Chill', author: 'Jake Thompson', thumb: 'https://picsum.photos/seed/tw2/100/100', live: true, time: '890 viewers' }
-      ],
-      contacts: [
-        { name: 'Mom', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mom&backgroundColor=ffdfbf', status: 'urgent', days: 5, freq: 3 },
-        { name: 'Dad', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dad&backgroundColor=c0aede', status: 'healthy', days: 1, freq: 3 },
-        { name: 'Bo Kim', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bokim&backgroundColor=d1d4f9', status: 'warning', days: 25, freq: 30 },
-        { name: 'Nana', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=nana&backgroundColor=ffd5dc', status: 'healthy', days: 10, freq: 30 },
-        { name: 'Johnson', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=johnson&backgroundColor=b6e3f4', status: 'healthy', days: 20, freq: 60 }
-      ]
-    };
+/* ============================================================== generators */
 
-    // People data for sheet
-    const people = {
-      mom: { name: 'Mom', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mom&backgroundColor=ffdfbf', tier: 'Family', days: 5, freq: 3 },
-      dad: { name: 'Dad', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dad&backgroundColor=c0aede', tier: 'Family', days: 1, freq: 3 },
-      bo: { name: 'Bo Kim', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bokim&backgroundColor=d1d4f9', tier: 'Inner Circle', days: 25, freq: 30 },
-      nana: { name: 'Nana', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=nana&backgroundColor=ffd5dc', tier: 'Inner Circle', days: 10, freq: 30 },
-      johnson: { name: 'Johnson Anumah', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=johnson&backgroundColor=b6e3f4', tier: 'Inner Circle', days: 20, freq: 60 }
-    };
+var GRADS = [
+  ['#f472b6', '#a855f7'], ['#38bdf8', '#6366f1'], ['#34d399', '#0ea5e9'], ['#fbbf24', '#f97316'],
+  ['#a3e635', '#10b981'], ['#c084fc', '#6366f1'], ['#fb7185', '#f43f5e'], ['#2dd4bf', '#3b82f6']
+];
 
-    let currentPerson = null;
-    let expandedOrbs = new Set();
+function hash(s) {
+  var h = 0;
+  for (var i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
 
-    // Initialize orbs
-    function initOrbs() {
-      const canvas = document.getElementById('orbCanvas');
-      const canvasRect = canvas.getBoundingClientRect();
+function initials(name) {
+  var p = name.trim().split(/\s+/);
+  return (p.length === 1 ? p[0].slice(0, 2) : p[0][0] + p[p.length - 1][0]).toUpperCase();
+}
 
-      platforms.forEach(p => {
-        const orb = document.createElement('div');
-        orb.className = `orb ${p.id} ${p.active ? '' : 'inactive'}`;
-        orb.id = `orb-${p.id}`;
-        orb.style.left = `${p.x}px`;
-        orb.style.top = `${p.y}px`;
+function avatar(name) {
+  var g = GRADS[hash(name) % GRADS.length];
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
+    '<stop offset="0%" stop-color="' + g[0] + '"/><stop offset="100%" stop-color="' + g[1] + '"/>' +
+    '</linearGradient></defs><rect width="100" height="100" rx="50" fill="url(#g)"/>' +
+    '<text x="50" y="50" text-anchor="middle" dominant-baseline="central" font-family="' +
+    'system-ui,-apple-system,sans-serif" font-size="38" font-weight="600" fill="rgba(255,255,255,.95)">' +
+    initials(name) + '</text></svg>';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
 
-        orb.innerHTML = `
-          <div class="orb-circle">
-            ${icons[p.id]}
-            <div class="orb-expanded-content">
-              <div class="orb-expanded-header">
-                <div class="orb-expanded-title">${icons[p.id]} ${p.name}</div>
-                <button class="orb-close" onclick="event.stopPropagation(); collapseOrb('${p.id}')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
-              </div>
-              <div class="orb-content-list" id="content-${p.id}"></div>
-            </div>
-          </div>
-          <div class="orb-label">${p.name}</div>
-        `;
+function thumb(seed, tint) {
+  var h = hash(seed);
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">' +
+    '<defs><linearGradient id="g" gradientTransform="rotate(' + (h % 360) + ' .5 .5)">' +
+    '<stop offset="0%" stop-color="' + tint + '" stop-opacity=".8"/>' +
+    '<stop offset="100%" stop-color="#08080c" stop-opacity=".96"/></linearGradient></defs>' +
+    '<rect width="320" height="180" fill="#14141c"/><rect width="320" height="180" fill="url(#g)"/>' +
+    '<circle cx="' + (40 + h % 240) + '" cy="' + (30 + h % 120) + '" r="' + (50 + h % 60) +
+    '" fill="#fff" opacity=".07"/></svg>';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
 
-        canvas.appendChild(orb);
-        makeDraggable(orb, p);
-      });
+function icon(id, size) {
+  var stroke = id === 'github' ? '#fff' : '#fff';
+  return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="' +
+    stroke + '" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + ICONS[id] + '</svg>';
+}
 
-      // Show hint briefly
-      const hint = document.getElementById('dragHint');
-      setTimeout(() => hint.classList.add('show'), 1000);
-      setTimeout(() => hint.classList.remove('show'), 4000);
-    }
+/* ================================================================== state */
 
-    // Make orb draggable
-    function makeDraggable(el, platform) {
-      let isDragging = false;
-      let startX, startY, origX, origY;
-      let hasMoved = false;
+var state = { tab: 'discovery', open: [], drag: {}, person: null };
 
-      el.addEventListener('touchstart', (e) => {
-        if (el.classList.contains('expanded')) return;
-        isDragging = true;
-        hasMoved = false;
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        origX = el.offsetLeft;
-        origY = el.offsetTop;
-        el.style.zIndex = 100;
-        el.style.transition = 'none';
-      });
+function isOverdue(p) { return p.days > p.cadence; }
+function pressure(p) { return p.days / p.cadence; }
 
-      el.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
-        const touch = e.touches[0];
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
+function ago(d) {
+  if (d === 0) return 'Today';
+  if (d === 1) return 'Yesterday';
+  if (d < 7) return d + ' days ago';
+  if (d < 14) return 'Last week';
+  if (d < 60) return Math.round(d / 7) + ' weeks ago';
+  return Math.round(d / 30) + ' months ago';
+}
 
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-          hasMoved = true;
-        }
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
+}
 
-        el.style.left = `${origX + dx}px`;
-        el.style.top = `${origY + dy}px`;
-      });
+function signalsFor(id) {
+  return SIGNALS.filter(function (s) { return s.platform === id; });
+}
 
-      el.addEventListener('touchend', () => {
-        isDragging = false;
-        el.style.zIndex = el.classList.contains('expanded') ? 50 : 10;
-        el.style.transition = '';
+/* ================================================================ discovery */
 
-        if (!hasMoved && platform.active) {
-          toggleOrb(platform.id);
-        }
-      });
+var ORB = 76, PANEL_W = 258, PANEL_H = 246, PANEL_HEAD = 38;
 
-      // Mouse support for desktop testing
-      el.addEventListener('click', (e) => {
-        if (platform.active && !hasMoved) {
-          toggleOrb(platform.id);
-        }
-      });
-    }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-    // Toggle orb expand/collapse
-    function toggleOrb(id) {
-      const orb = document.getElementById(`orb-${id}`);
-      if (orb.classList.contains('expanded')) {
-        collapseOrb(id);
-      } else {
-        expandOrb(id);
-      }
-    }
+function renderField() {
+  var field = document.getElementById('field');
+  var W = field.clientWidth, H = field.clientHeight;
+  field.innerHTML = '';
 
-    // Expand orb
-    function expandOrb(id) {
-      const orb = document.getElementById(`orb-${id}`);
-      orb.classList.add('expanded');
-      expandedOrbs.add(id);
+  ORDER.forEach(function (id) {
+    var meta = PLATFORMS[id];
+    var d = state.drag[id] || { dx: 0, dy: 0 };
+    var baseX = meta.fx * W - ORB / 2;
+    var baseY = meta.fy * Math.max(0, H - ORB);
+    var x = clamp(baseX + d.dx, 4, Math.max(4, W - ORB - 4));
+    var y = clamp(baseY + d.dy, 4, Math.max(4, H - ORB - 4));
+    var isOpen = state.open.indexOf(id) >= 0;
 
-      // Populate content
-      const contentList = document.getElementById(`content-${id}`);
-      contentList.innerHTML = '';
+    var live = signalsFor(id).filter(function (s) { return s.live; }).length;
+    var badge = id === 'contacts' ? PEOPLE.filter(isOverdue).length : live;
 
-      if (id === 'contacts') {
-        platformContent.contacts.forEach(c => {
-          const item = document.createElement('div');
-          item.className = 'contact-item';
-          item.innerHTML = `
-            <img class="contact-avatar ${c.status}" src="${c.avatar}" alt="${c.name}">
-            <div class="contact-info">
-              <div class="contact-name">${c.name}</div>
-              <div class="contact-status ${c.status}">${c.days === 0 ? 'Today' : c.days + ' days ago'}${c.status === 'urgent' ? ' • Overdue!' : ''}</div>
-            </div>
-            <button class="contact-action" onclick="event.stopPropagation(); openContactSheet('${c.name.toLowerCase().split(' ')[0]}')">Call</button>
-          `;
-          contentList.appendChild(item);
-        });
-      } else if (platformContent[id]) {
-        platformContent[id].forEach(item => {
-          const el = document.createElement('div');
-          el.className = 'orb-content-item';
-          el.onclick = () => openVideoSheet(item);
-          el.innerHTML = `
-            <img class="orb-content-thumb ${id === 'github' ? 'avatar' : ''}" src="${item.thumb}" alt="">
-            <div class="orb-content-info">
-              <div class="orb-content-title">${item.title}</div>
-              <div class="orb-content-meta">${item.author} • ${item.time}</div>
-            </div>
-            ${item.live ? '<div class="live-dot"></div>' : ''}
-          `;
-          contentList.appendChild(el);
-        });
-      }
-    }
+    var b = document.createElement('button');
+    b.className = 'orb' + (isOpen ? ' open' : '');
+    b.setAttribute('aria-label', meta.name);
+    b.style.left = x + 'px';
+    b.style.top = y + 'px';
+    b.style.background = meta.color;
+    b.style.boxShadow = '0 0 34px ' + meta.color + (id === 'github' ? '00' : '88');
+    if (id === 'github') b.style.boxShadow = '0 0 30px rgba(255,255,255,.24)';
+    b.innerHTML = icon(id, 32) +
+      (badge > 0 ? '<span class="pip" style="color:' + (id === 'github' ? '#111' : meta.color) + '">' + badge + '</span>' : '');
+    attachDrag(b, id, baseX, baseY, W, H);
+    field.appendChild(b);
 
-    // Collapse orb
-    function collapseOrb(id) {
-      const orb = document.getElementById(`orb-${id}`);
-      orb.classList.remove('expanded');
-      expandedOrbs.delete(id);
-    }
+    if (!isOpen) return;
 
-    // Switch tabs
-    function switchTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    // Keep the panel fully on-screen wherever the orb was dragged to.
+    var pw = Math.min(PANEL_W, Math.max(180, W - 16));
+    var left = clamp(x + ORB / 2 - pw / 2, 8, Math.max(8, W - pw - 8));
+    var below = y + ORB + 12;
+    var pref = below + PANEL_H > H ? y - PANEL_H - 12 : below;
+    var top = clamp(pref, 8, Math.max(8, H - PANEL_H - 8));
+    var listH = Math.max(96, Math.min(PANEL_H - PANEL_HEAD, H - top - PANEL_HEAD - 16));
 
-      if (tab === 'discovery') {
-        document.querySelector('.tab:first-child').classList.add('active');
-        document.getElementById('discoveryPanel').classList.add('active');
-      } else {
-        document.querySelector('.tab:last-child').classList.add('active');
-        document.getElementById('recommendationsPanel').classList.add('active');
-      }
-    }
+    var panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.style.cssText += 'left:' + left + 'px;top:' + top + 'px;width:' + pw +
+      'px;z-index:' + (20 + state.open.indexOf(id)) + ';border-color:' + meta.color + '55';
 
-    // Open contact sheet
-    function openContactSheet(id) {
-      const person = people[id];
-      if (!person) return;
-      currentPerson = id;
+    var rows = id === 'contacts' ? contactRows() : signalRows(id);
+    panel.innerHTML =
+      '<div class="panel-head" style="background:' + meta.color + '22"><span>' + esc(meta.name) + '</span>' +
+      '<button class="x" aria-label="Close ' + esc(meta.name) + '">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>' +
+      '</button></div>' +
+      '<div class="panel-body" style="max-height:' + listH + 'px">' + rows + '</div>';
 
-      document.getElementById('sheetAvatar').src = person.avatar;
-      document.getElementById('sheetName').textContent = person.name;
-      document.getElementById('sheetTier').textContent = person.tier;
-
-      const isOverdue = person.days >= person.freq;
-      document.getElementById('sheetHealth').textContent = isOverdue ? 'Needs attention' : 'Healthy';
-      document.getElementById('sheetHealth').className = `sheet-stat-value ${isOverdue ? 'bad' : 'good'}`;
-
-      const healthPercent = Math.max(5, 100 - (person.days / person.freq) * 100);
-      const bar = document.getElementById('sheetHealthBar');
-      bar.style.width = healthPercent + '%';
-      bar.className = `sheet-health-fill ${isOverdue ? 'bad' : ''}`;
-
-      document.getElementById('sheetLast').textContent = person.days === 0 ? 'Today' : `${person.days} days ago`;
-      document.getElementById('sheetFreq').textContent = `${person.freq} days`;
-
-      document.getElementById('contactOverlay').classList.add('open');
-      document.getElementById('contactSheet').classList.add('open');
-    }
-
-    function closeContactSheet() {
-      document.getElementById('contactOverlay').classList.remove('open');
-      document.getElementById('contactSheet').classList.remove('open');
-    }
-
-    function logContact() {
-      const btn = document.getElementById('sheetActionBtn');
-      const text = document.getElementById('sheetActionText');
-      text.textContent = 'Logged!';
-      btn.classList.add('success');
-
-      if (currentPerson && people[currentPerson]) {
-        people[currentPerson].days = 0;
-      }
-
-      setTimeout(() => {
-        text.textContent = 'Log Contact';
-        btn.classList.remove('success');
-        closeContactSheet();
-      }, 1500);
-    }
-
-    // Video sheet
-    function openVideoSheet(item) {
-      document.getElementById('videoTitle').textContent = item.title;
-      document.getElementById('videoAuthor').textContent = item.author;
-      document.getElementById('videoAvatar').src = item.thumb;
-      document.getElementById('videoMeta').textContent = item.live ? 'Streaming now' : item.time;
-      document.getElementById('videoFrame').src = 'https://www.youtube.com/embed/dQw4w9WgXcQ';
-
-      document.getElementById('videoOverlay').classList.add('open');
-      document.getElementById('videoSheet').classList.add('open');
-    }
-
-    function closeVideoSheet() {
-      document.getElementById('videoOverlay').classList.remove('open');
-      document.getElementById('videoSheet').classList.remove('open');
-      document.getElementById('videoFrame').src = '';
-    }
-
-    // Populate recommendations
-    function populateRecommendations() {
-      // Reconnect
-      const reconnect = document.getElementById('reconnectScroll');
-      Object.entries(people).forEach(([id, p]) => {
-        const isUrgent = p.days >= p.freq;
-        reconnect.innerHTML += `
-          <div class="rec-contact-card ${isUrgent ? 'urgent' : ''}" onclick="openContactSheet('${id}')">
-            <img class="rec-contact-avatar" src="${p.avatar}" alt="${p.name}">
-            <div class="rec-contact-name">${p.name}</div>
-            <div class="rec-contact-status">${p.days === 0 ? 'Today' : p.days + ' days ago'}${isUrgent ? ' • Overdue' : ''}</div>
-          </div>
-        `;
-      });
-
-      // Live
-      const live = document.getElementById('liveScroll');
-      [
-        { title: 'Late Night Coding Session', author: 'Sarah Chen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah', viewers: '2.4K', thumb: 'https://picsum.photos/seed/live1/400/225', platform: 'twitch' },
-        { title: 'Weekly Tech News', author: 'Mike Torres', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike', viewers: '891', thumb: 'https://picsum.photos/seed/live2/400/225', platform: 'youtube' }
-      ].forEach(item => {
-        live.innerHTML += `
-          <div class="rec-card" onclick="openVideoSheet({title:'${item.title}',author:'${item.author}',thumb:'${item.avatar}',live:true,time:'${item.viewers} watching'})">
-            <div class="rec-card-thumb">
-              <img src="${item.thumb}" alt="">
-              <span class="rec-card-live">LIVE</span>
-              <div class="rec-card-platform" style="background:${item.platform === 'youtube' ? '#ff0000' : '#9146ff'}">${icons[item.platform]}</div>
-            </div>
-            <div class="rec-card-body">
-              <div class="rec-card-title">${item.title}</div>
-              <div class="rec-card-meta">
-                <img class="rec-card-avatar" src="${item.avatar}" alt="">
-                <span class="rec-card-author">${item.author}</span>
-                <span class="rec-card-time">${item.viewers} watching</span>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-
-      // Because you follow
-      const because = document.getElementById('becauseScroll');
-      [
-        { title: 'Building AI Apps from Scratch', author: 'Sarah Chen', thumb: 'https://picsum.photos/seed/rec1/400/225', time: '2 hours ago' },
-        { title: 'My Home Office Setup 2024', author: 'Emma Wilson', thumb: 'https://picsum.photos/seed/rec2/400/225', time: '1 day ago' },
-        { title: 'React Performance Deep Dive', author: 'Kyle Martinez', thumb: 'https://picsum.photos/seed/rec3/400/225', time: '3 days ago' }
-      ].forEach(item => {
-        because.innerHTML += `
-          <div class="rec-card" onclick="openVideoSheet({title:'${item.title}',author:'${item.author}',thumb:'https://api.dicebear.com/7.x/avataaars/svg?seed=${item.author.split(' ')[0].toLowerCase()}',time:'${item.time}'})">
-            <div class="rec-card-thumb">
-              <img src="${item.thumb}" alt="">
-              <div class="rec-card-platform" style="background:#ff0000">${icons.youtube}</div>
-            </div>
-            <div class="rec-card-body">
-              <div class="rec-card-title">${item.title}</div>
-              <div class="rec-card-meta">
-                <img class="rec-card-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=${item.author.split(' ')[0].toLowerCase()}" alt="">
-                <span class="rec-card-author">${item.author}</span>
-                <span class="rec-card-time">${item.time}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-
-      // Suggested
-      const suggested = document.getElementById('suggestedScroll');
-      [
-        { title: 'Design Systems Deep Dive', author: 'Design Weekly', thumb: 'https://picsum.photos/seed/sug1/400/225', time: '500K subscribers' },
-        { title: 'Startup Funding Explained', author: 'VC Insights', thumb: 'https://picsum.photos/seed/sug2/400/225', time: '120K subscribers' }
-      ].forEach(item => {
-        suggested.innerHTML += `
-          <div class="rec-card">
-            <div class="rec-card-thumb">
-              <img src="${item.thumb}" alt="">
-              <div class="rec-card-platform" style="background:#ff0000">${icons.youtube}</div>
-            </div>
-            <div class="rec-card-body">
-              <div class="rec-card-title">${item.title}</div>
-              <div class="rec-card-meta">
-                <img class="rec-card-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=${item.author.replace(' ','')}" alt="">
-                <span class="rec-card-author">${item.author}</span>
-                <span class="rec-card-time">${item.time}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    // Search placeholder
-    function openSearch() {
-      alert('Search coming soon! Try: "Who\'s streaming?" or "Show Kyle\'s commits"');
-    }
-
-    // Init
-    document.addEventListener('DOMContentLoaded', () => {
-      initOrbs();
-      populateRecommendations();
+    panel.querySelector('.x').addEventListener('click', function () { toggle(id); });
+    panel.querySelectorAll('[data-person]').forEach(function (el) {
+      el.addEventListener('click', function () { openPerson(el.getAttribute('data-person')); });
     });
-  </script>
-</body>
-</html>
+    field.appendChild(panel);
+  });
+
+  var hint = document.createElement('p');
+  hint.className = 'hint';
+  hint.textContent = 'Drag to rearrange · tap to open';
+  field.appendChild(hint);
+}
+
+function signalRows(id) {
+  var list = signalsFor(id);
+  if (!list.length) return '<p style="padding:22px 0;text-align:center;font-size:12px;color:var(--ink-3)">Nothing new here.</p>';
+  return list.map(function (s) {
+    // Platform colour means "live". A plain timestamp stays muted, so an
+    // ordinary upload never reads as an alert.
+    var metaColor = s.live ? PLATFORMS[id].color : 'var(--ink-3)';
+    var metaText = s.live && s.viewers ? s.viewers.toLocaleString() + ' watching' : s.when;
+    var dot = s.live ? '<span style="width:6px;height:6px;border-radius:99px;background:' + PLATFORMS[id].color + ';display:inline-block"></span>' : '';
+    return '<div class="row"><img src="' + avatar(s.author) + '" alt="">' +
+      '<div class="grow"><div class="t truncate">' + esc(s.title) + '</div>' +
+      '<div class="s truncate">' + esc(s.author) + '</div>' +
+      '<div class="meta" style="color:' + metaColor + '">' + dot + esc(metaText) + '</div></div></div>';
+  }).join('');
+}
+
+function contactRows() {
+  return PEOPLE.slice().sort(function (a, b) { return pressure(b) - pressure(a); })
+    .slice(0, 6).map(function (p) {
+      var od = isOverdue(p);
+      return '<button class="row" data-person="' + p.id + '">' +
+        '<img src="' + avatar(p.name) + '" alt="" style="box-shadow:0 0 0 2px ' + (od ? 'var(--overdue)' : 'var(--current)') + '">' +
+        '<div class="grow"><div class="t truncate">' + esc(p.name) + '</div>' +
+        '<div class="s truncate" style="color:' + (od ? 'var(--overdue)' : 'var(--ink-3)') + '">' +
+        esc(ago(p.days)) + (od ? ' · overdue' : '') + '</div></div></button>';
+    }).join('');
+}
+
+function attachDrag(el, id, baseX, baseY, W, H) {
+  var sx = 0, sy = 0, moved = false, active = false;
+
+  el.addEventListener('pointerdown', function (e) {
+    active = true; moved = false; sx = e.clientX; sy = e.clientY;
+    el.setPointerCapture(e.pointerId);
+  });
+
+  el.addEventListener('pointermove', function (e) {
+    if (!active) return;
+    var dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+    if (!moved) return;
+    var cur = state.drag[id] || { dx: 0, dy: 0 };
+    el.style.left = clamp(baseX + cur.dx + dx, 4, Math.max(4, W - ORB - 4)) + 'px';
+    el.style.top = clamp(baseY + cur.dy + dy, 4, Math.max(4, H - ORB - 4)) + 'px';
+  });
+
+  el.addEventListener('pointerup', function (e) {
+    if (!active) return;
+    active = false;
+    if (!moved) { toggle(id); return; }
+    var cur = state.drag[id] || { dx: 0, dy: 0 };
+    var nx = clamp(baseX + cur.dx + (e.clientX - sx), 4, Math.max(4, W - ORB - 4));
+    var ny = clamp(baseY + cur.dy + (e.clientY - sy), 4, Math.max(4, H - ORB - 4));
+    state.drag[id] = { dx: nx - baseX, dy: ny - baseY };
+    renderField();
+  });
+}
+
+function toggle(id) {
+  var i = state.open.indexOf(id);
+  if (i >= 0) state.open.splice(i, 1); else state.open.push(id);
+  renderField();
+}
+
+/* ================================================================== for you */
+
+function renderFeed() {
+  var overdue = PEOPLE.filter(isOverdue).length;
+  document.getElementById('odcount').textContent = overdue;
+  document.getElementById('odcount').hidden = overdue === 0;
+
+  var reconnect = PEOPLE.slice().sort(function (a, b) { return pressure(b) - pressure(a); }).slice(0, 6);
+  var milestones = SIGNALS.filter(function (s) { return s.milestone; });
+  var presence = SIGNALS.filter(function (s) { return s.presence; });
+  var live = SIGNALS.filter(function (s) { return s.live; });
+  var missed = SIGNALS.filter(function (s) { return !s.live && !s.milestone && !s.presence; });
+
+  var html = '';
+
+  html += section('Reconnect', 'People you should reach out to', '',
+    reconnect.map(function (p) {
+      var od = isOverdue(p);
+      return '<button class="who' + (od ? ' od' : '') + '" data-person="' + p.id + '">' +
+        '<img src="' + avatar(p.name) + '" alt="" style="box-shadow:0 0 0 2px ' + (od ? 'var(--overdue)' : 'var(--current)') + '">' +
+        '<div class="n truncate">' + esc(p.name) + '</div>' +
+        '<div class="d">' + esc(ago(p.days)) + '</div>' +
+        (od ? '<div class="flag">Overdue</div>' : '') + '</button>';
+    }).join(''));
+
+  if (milestones.length) {
+    html += section('Worth knowing', 'Not routine activity — actual news',
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--milestone)" stroke-width="2" stroke-linecap="round"><path d="M6 4h12v5a6 6 0 0 1-12 0z"/><path d="M6 6H3v2a3 3 0 0 0 3 3M18 6h3v2a3 3 0 0 1-3 3M9 20h6M12 15v5"/></svg>',
+      milestones.map(function (s) {
+        return '<button class="milestone" data-person="' + (s.personId || '') + '">' +
+          '<div style="display:flex;gap:12px;align-items:center">' +
+          '<img src="' + avatar(s.author) + '" alt="" style="width:48px;height:48px;border-radius:999px;box-shadow:0 0 0 2px var(--st)">' +
+          '<div style="min-width:0">' +
+          '<div class="eyebrow">' + esc(s.author.split(' ')[0]) + '’s first marathon</div>' +
+          '<div class="t truncate">' + esc(s.title) + '</div>' +
+          '<div class="s truncate">' + esc(s.sub) + '</div></div></div>' +
+          '<div class="cta">Say something →</div></button>';
+      }).join(''));
+  }
+
+  if (presence.length) {
+    html += section('Happening now', 'Your people, together',
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--dc)" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 5.2a3.2 3.2 0 0 1 0 5.6M19 20a6.4 6.4 0 0 0-3-5.4"/></svg>',
+      presence.map(function (s) {
+        var faces = ['Maya Rodriguez', 'Bo Kim', 'Chris Okafor', 'Devin Park']
+          .map(function (n) { return '<img src="' + avatar(n) + '" alt="">'; }).join('');
+        return '<div class="presence"><div class="t">' + esc(s.title) + '</div>' +
+          '<div class="s">' + esc(s.sub) + '</div><div class="stack">' + faces + '</div></div>';
+      }).join(''));
+  }
+
+  html += section('Live now', 'From people you follow',
+    '<span style="width:10px;height:10px;border-radius:99px;background:var(--overdue);display:inline-block"></span>',
+    live.map(card).join(''));
+
+  html += section('You might have missed', 'Since you last looked', '', missed.map(card).join(''));
+
+  var feed = document.getElementById('feed');
+  feed.innerHTML = html;
+  feed.querySelectorAll('[data-person]').forEach(function (el) {
+    var id = el.getAttribute('data-person');
+    if (id) el.addEventListener('click', function () { openPerson(id); });
+  });
+}
+
+function section(title, sub, icon, inner) {
+  return '<section><div class="head"><h2>' + icon + esc(title) + '</h2><p>' + esc(sub) + '</p></div>' +
+    '<div class="rail">' + inner + '<div style="width:4px;flex:none"></div></div></section>';
+}
+
+function card(s) {
+  var meta = PLATFORMS[s.platform];
+  return '<div class="card"><div class="thumb">' +
+    '<img src="' + thumb(s.id, meta.color) + '" alt="">' +
+    (s.live ? '<span class="live"><span style="width:6px;height:6px;border-radius:99px;background:#fff;display:inline-block"></span>LIVE</span>' : '') +
+    '<span class="badge" style="background:' + meta.color + '">' + esc(meta.name[0]) + '</span></div>' +
+    '<div class="pad"><div class="t">' + esc(s.title) + '</div><div class="foot">' +
+    '<img src="' + avatar(s.author) + '" alt=""><span class="truncate grow">' + esc(s.author) + '</span>' +
+    '<span>' + esc(s.live && s.viewers ? (s.viewers / 1000).toFixed(1) + 'K' : s.when) + '</span>' +
+    '</div></div></div>';
+}
+
+/* ============================================================ person sheet */
+
+function openPerson(id) {
+  var p = PEOPLE.filter(function (x) { return x.id === id; })[0];
+  if (!p) return;
+  closePerson();
+
+  var device = document.getElementById('device');
+  var od = isOverdue(p);
+
+  var scrim = document.createElement('div');
+  scrim.className = 'scrim';
+  scrim.id = 'scrim';
+  scrim.addEventListener('click', closePerson);
+
+  var sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  sheet.id = 'sheet';
+  sheet.setAttribute('role', 'dialog');
+  sheet.setAttribute('aria-label', p.name);
+  sheet.innerHTML =
+    '<div class="grip"></div>' +
+    '<div class="who-row"><img src="' + avatar(p.name) + '" alt="" style="box-shadow:0 0 0 2px ' +
+      (od ? 'var(--overdue)' : 'var(--current)') + '">' +
+      '<div style="min-width:0"><h3>' + esc(p.name) + '</h3>' +
+      '<div class="tier">' + esc(p.tier) + '</div>' +
+      '<div class="chips">' + p.platforms.map(function (pl) {
+        return '<span class="chip" style="background:' + PLATFORMS[pl].color + '2e;color:' +
+          (pl === 'github' ? '#e8e8ee' : PLATFORMS[pl].color) + '">' + esc(PLATFORMS[pl].name) + '</span>';
+      }).join('') + '</div></div></div>' +
+    '<div class="meter-label"><span style="color:var(--ink-3)">Last contact</span>' +
+      '<span style="color:' + (od ? 'var(--overdue)' : 'var(--ink-2)') + ';font-weight:600">' + esc(ago(p.days)) + '</span></div>' +
+    '<div class="meter"><i style="width:' + Math.min(100, pressure(p) * 100) + '%;background:' +
+      (od ? 'var(--overdue)' : 'var(--current)') + '"></i></div>' +
+    '<div class="cadence">You like to be in touch every ' + p.cadence + ' days · usually by ' + esc(p.method) + '</div>' +
+    (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
+    '<div class="actions">' +
+      '<button class="act"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' + ICONS.contacts + '</svg>Call</button>' +
+      '<button class="act"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Text</button>' +
+    '</div>' +
+    '<button class="primary" id="logbtn">' +
+      '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>' +
+      'I reached out</button>';
+
+  device.appendChild(scrim);
+  device.appendChild(sheet);
+  sheet.querySelector('#logbtn').addEventListener('click', function () { logContact(p); });
+}
+
+function closePerson() {
+  var s = document.getElementById('scrim'), h = document.getElementById('sheet');
+  if (s) s.remove();
+  if (h) h.remove();
+}
+
+function logContact(p) {
+  p.days = 0;
+  closePerson();
+  render();
+  toast('Logged — you’re current with ' + p.name);
+}
+
+var toastTimer;
+function toast(msg) {
+  var old = document.getElementById('toast');
+  if (old) old.remove();
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.id = 'toast';
+  t.setAttribute('role', 'status');
+  t.textContent = msg;
+  document.getElementById('device').appendChild(t);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.remove(); }, 2800);
+}
+
+/* ==================================================================== boot */
+
+function render() {
+  var discovery = state.tab === 'discovery';
+  document.getElementById('field').hidden = !discovery;
+  document.getElementById('feed').hidden = discovery;
+  document.getElementById('tab-discovery').setAttribute('aria-selected', String(discovery));
+  document.getElementById('tab-foryou').setAttribute('aria-selected', String(!discovery));
+  renderFeed();
+  if (discovery) renderField();
+}
+
+document.getElementById('tab-discovery').addEventListener('click', function () {
+  state.tab = 'discovery'; render();
+});
+document.getElementById('tab-foryou').addEventListener('click', function () {
+  state.tab = 'foryou'; render();
+});
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePerson(); });
+
+var rt;
+window.addEventListener('resize', function () {
+  clearTimeout(rt);
+  rt = setTimeout(function () { if (state.tab === 'discovery') renderField(); }, 120);
+});
+
+render();
+</script>
