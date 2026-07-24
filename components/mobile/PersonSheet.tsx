@@ -7,6 +7,12 @@ import {
   avatar, agoLabel, isOverdue, pressure,
 } from '@/lib/demo-data'
 
+/** Shared soft-glass fill for the secondary actions. */
+const SOFT = {
+  background: 'linear-gradient(150deg, rgba(255,255,255,.16), rgba(255,255,255,.05))',
+  boxShadow: 'inset 0 1px 0 rgba(255,255,255,.3)',
+}
+
 interface Props {
   person: Person | null
   onClose: () => void
@@ -23,7 +29,8 @@ export default function PersonSheet({ person, onClose, onLogContact }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-40 backdrop-blur-md"
+            style={{ background: 'rgba(4,2,12,.58)' }}
           />
           <motion.div
             initial={{ y: '100%' }}
@@ -34,9 +41,16 @@ export default function PersonSheet({ person, onClose, onLogContact }: Props) {
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}
             onDragEnd={(_, info) => { if (info.offset.y > 100) onClose() }}
-            className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-white/10 bg-[#12121a] pb-[env(safe-area-inset-bottom)]"
+            className="fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] border-t pb-[env(safe-area-inset-bottom)]"
+            style={{
+              background: 'linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06) 40%, rgba(12,8,26,.82))',
+              backdropFilter: 'blur(34px) saturate(200%)',
+              WebkitBackdropFilter: 'blur(34px) saturate(200%)',
+              borderColor: 'var(--glass-edge)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,.42), 0 -20px 60px rgba(0,0,0,.6)',
+            }}
           >
-            <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-white/20" />
+            <div className="mx-auto mt-2.5 h-1 w-[42px] rounded-full bg-white/[0.34]" />
 
             <div className="px-5 pt-4 pb-6">
               <button
@@ -52,7 +66,11 @@ export default function PersonSheet({ person, onClose, onLogContact }: Props) {
                   src={avatar(person.name)}
                   alt=""
                   className="w-16 h-16 rounded-full"
-                  style={{ boxShadow: `0 0 0 2px ${isOverdue(person) ? '#ef4444' : '#10b981'}` }}
+                  style={{
+                    boxShadow: isOverdue(person)
+                      ? '0 0 0 2px var(--overdue), 0 0 26px rgba(255,93,115,.7)'
+                      : '0 0 0 2px var(--current), 0 0 26px rgba(46,230,168,.6)',
+                  }}
                 />
                 <div className="min-w-0">
                   <h2 className="text-[20px] font-semibold text-white truncate">{person.name}</h2>
@@ -61,8 +79,8 @@ export default function PersonSheet({ person, onClose, onLogContact }: Props) {
                     {person.platforms.map(pl => (
                       <span
                         key={pl}
-                        className="px-2 py-0.5 rounded-full text-[10px] font-medium"
-                        style={{ background: `${PLATFORM_META[pl].color}22`, color: PLATFORM_META[pl].color }}
+                        className="px-2.5 py-[3px] rounded-full text-[10px] font-bold border border-white/20"
+                        style={{ background: `${PLATFORM_META[pl].color}3d`, color: PLATFORM_META[pl].lit }}
                       >
                         {PLATFORM_META[pl].name}
                       </span>
@@ -75,17 +93,22 @@ export default function PersonSheet({ person, onClose, onLogContact }: Props) {
               <div className="mt-5">
                 <div className="flex justify-between text-[12px] mb-1.5">
                   <span className="text-white/45">Last contact</span>
-                  <span className={isOverdue(person) ? 'text-red-400 font-medium' : 'text-white/70'}>
+                  <span className="font-bold" style={{ color: isOverdue(person) ? 'var(--overdue)' : 'rgba(255,255,255,.72)' }}>
                     {agoLabel(person.daysSince)}
                   </span>
                 </div>
-                <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <div className="h-[7px] rounded-full bg-white/[0.14] overflow-hidden" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,.4)' }}>
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min(100, pressure(person) * 100)}%` }}
                     transition={{ duration: 0.5, ease: 'easeOut' }}
                     className="h-full rounded-full"
-                    style={{ background: isOverdue(person) ? '#ef4444' : '#10b981' }}
+                    style={{
+                      background: isOverdue(person)
+                        ? 'linear-gradient(90deg,#ff9d6b,#ff5d73)'
+                        : 'linear-gradient(90deg,#2ee6a8,#22d3ee)',
+                      boxShadow: isOverdue(person) ? '0 0 14px rgba(255,93,115,.8)' : '0 0 14px rgba(46,230,168,.7)',
+                    }}
                   />
                 </div>
                 <p className="text-[12px] text-white/35 mt-1.5">
@@ -94,16 +117,22 @@ export default function PersonSheet({ person, onClose, onLogContact }: Props) {
               </div>
 
               {person.note && (
-                <p className="mt-4 p-3 rounded-xl bg-white/[0.04] text-[13px] text-white/60 italic">
+                <p
+                  className="mt-4 p-3.5 rounded-[15px] border border-white/[0.14] text-[13px] text-white/[0.72] italic"
+                  style={{
+                    background: 'linear-gradient(150deg, rgba(255,255,255,.13), rgba(255,255,255,.04))',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,.24)',
+                  }}
+                >
                   {person.note}
                 </p>
               )}
 
               <div className="mt-5 grid grid-cols-2 gap-2.5">
-                <button className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/[0.06] text-[14px] font-medium text-white hover:bg-white/10 transition-colors">
+                <button className="sheen relative flex items-center justify-center gap-2 py-3.5 rounded-[15px] border border-white/20 text-[14px] font-semibold text-white transition-transform active:scale-[.98]" style={SOFT}>
                   <Phone size={16} /> Call
                 </button>
-                <button className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/[0.06] text-[14px] font-medium text-white hover:bg-white/10 transition-colors">
+                <button className="sheen relative flex items-center justify-center gap-2 py-3.5 rounded-[15px] border border-white/20 text-[14px] font-semibold text-white transition-transform active:scale-[.98]" style={SOFT}>
                   <MessageSquare size={16} /> Text
                 </button>
               </div>
@@ -111,7 +140,14 @@ export default function PersonSheet({ person, onClose, onLogContact }: Props) {
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { onLogContact(person.id); onClose() }}
-                className="mt-2.5 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-emerald-500 text-[15px] font-semibold text-white"
+                className="mt-2.5 w-full flex items-center justify-center gap-2 py-[15px] rounded-[15px] text-[15px] font-bold"
+                style={{
+                  background:
+                    'radial-gradient(120% 160% at 22% 0%, rgba(255,255,255,.4), transparent 62%),' +
+                    'linear-gradient(92deg, #2ee6a8, #14b8a6 60%, #22d3ee)',
+                  color: '#04231b',
+                  boxShadow: '0 12px 32px rgba(46,230,168,.5), inset 0 1px 0 rgba(255,255,255,.55)',
+                }}
               >
                 <Check size={17} /> I reached out
               </motion.button>

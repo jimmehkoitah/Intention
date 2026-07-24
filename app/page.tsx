@@ -6,6 +6,7 @@ import { Search } from 'lucide-react'
 import OrbField from '@/components/mobile/OrbField'
 import ForYou from '@/components/mobile/ForYou'
 import PersonSheet from '@/components/mobile/PersonSheet'
+import Aurora from '@/components/mobile/Aurora'
 import { PEOPLE, Person, isOverdue } from '@/lib/demo-data'
 
 type Tab = 'discovery' | 'foryou'
@@ -28,9 +29,11 @@ export default function Home() {
   const overdueCount = people.filter(isOverdue).length
 
   return (
-    <div className="fixed inset-0 flex flex-col constellation-bg text-white">
+    <div className="fixed inset-0 flex flex-col text-white isolate" style={{ background: '#07060f' }}>
+      <Aurora />
+
       {/* Header */}
-      <header className="shrink-0 px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
+      <header className="relative z-10 shrink-0 px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 flex items-center justify-center">
@@ -42,6 +45,7 @@ export default function Home() {
           </div>
           <button
             className="w-10 h-10 rounded-full glass flex items-center justify-center"
+            style={{ boxShadow: 'var(--glass-lip)' }}
             aria-label="Search"
           >
             <Search size={18} className="text-white/60" />
@@ -56,16 +60,23 @@ export default function Home() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`relative py-2.5 rounded-2xl text-[15px] font-semibold transition-colors ${
-                  active ? 'text-white' : 'text-white/50 bg-white/[0.05]'
+                className={`relative py-3 rounded-[17px] text-[15px] font-semibold transition-colors border ${
+                  active
+                    ? 'text-white border-transparent'
+                    : 'text-white/50 border-white/[0.16] bg-white/[0.06] backdrop-blur-xl'
                 }`}
               >
                 {active && (
                   <motion.span
                     layoutId="tab-pill"
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-r from-violet-500 to-sky-500"
-                    style={{ boxShadow: '0 6px 22px rgba(139,92,246,0.45)' }}
+                    className="absolute inset-0 rounded-[17px]"
+                    style={{
+                      background:
+                        'radial-gradient(120% 160% at 20% 0%, rgba(255,255,255,.34), transparent 60%),' +
+                        'linear-gradient(92deg, #8b5cf6, #6366f1 46%, #22d3ee)',
+                      boxShadow: '0 10px 30px rgba(139,92,246,.55), inset 0 1px 0 rgba(255,255,255,.42)',
+                    }}
                   />
                 )}
                 <span className="relative flex items-center justify-center gap-1.5">
@@ -73,8 +84,12 @@ export default function Home() {
                   {t === 'foryou' && overdueCount > 0 && (
                     <span
                       className={`min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold flex items-center justify-center ${
-                        active ? 'bg-white/25 text-white' : 'bg-red-500 text-white'
+                        active ? 'bg-white/30 text-white' : 'text-white'
                       }`}
+                      style={active ? undefined : {
+                        background: 'linear-gradient(180deg, #ff7a8a, var(--overdue))',
+                        boxShadow: '0 3px 12px rgba(255,93,115,.6)',
+                      }}
                     >
                       {overdueCount}
                     </span>
@@ -94,7 +109,7 @@ export default function Home() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className="flex-1 flex flex-col min-h-0"
+          className="relative z-10 flex-1 flex flex-col min-h-0"
         >
           {tab === 'discovery'
             ? <OrbField people={people} onPersonClick={setSelected} />
@@ -110,7 +125,12 @@ export default function Home() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
-            className="fixed bottom-8 inset-x-4 z-[60] py-3 px-4 rounded-2xl bg-emerald-500 text-center text-[14px] font-semibold text-white shadow-lg"
+            className="fixed bottom-8 inset-x-4 z-[60] py-3.5 px-4 rounded-[18px] text-center text-[14px] font-bold"
+            style={{
+              background: 'linear-gradient(92deg, rgba(46,230,168,.94), rgba(34,211,238,.94))',
+              color: '#04231b',
+              boxShadow: '0 16px 42px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.5)',
+            }}
           >
             {toast}
           </motion.div>

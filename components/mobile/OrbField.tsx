@@ -129,8 +129,11 @@ export default function OrbField({ people, onPersonClick }: Props) {
                 left: `calc(${fx * 100}% - ${ORB / 2}px)`,
                 top: `calc(${fy * 100}% - ${fy * ORB}px)`,
                 width: ORB, height: ORB, borderRadius: ORB,
-                background: id === 'github' ? '#1c1c22' : meta.color,
-                boxShadow: `0 0 34px ${meta.glow}`,
+                background:
+                  `radial-gradient(circle at 32% 26%, rgba(255,255,255,.62), rgba(255,255,255,0) 46%),` +
+                  `linear-gradient(155deg, ${meta.lit}, ${meta.color} 62%)`,
+                boxShadow:
+                  `0 10px 26px rgba(0,0,0,.45), 0 0 42px ${meta.glow}, inset 0 -6px 14px rgba(0,0,0,.28)`,
                 touchAction: 'none',
               }}
               className="flex items-center justify-center cursor-grab active:cursor-grabbing"
@@ -157,14 +160,12 @@ export default function OrbField({ people, onPersonClick }: Props) {
                   style={{
                     position: 'absolute',
                     left: panelLeft, top: panelTop, width: panelW, zIndex: z,
-                    borderColor: `${meta.color}55`,
-                    boxShadow: `0 12px 40px rgba(0,0,0,0.6), 0 0 24px ${meta.glow}`,
                   }}
-                  className="rounded-2xl border bg-[#12121a]/95 backdrop-blur-xl overflow-hidden"
+                  className={`rounded-[20px] overflow-hidden glass holo${live > 0 ? ' holo-live' : ''}`}
                 >
                   <div
-                    className="flex items-center justify-between px-3 py-2 border-b border-white/10"
-                    style={{ background: `${meta.color}22` }}
+                    className="flex items-center justify-between px-3 py-2.5 border-b border-white/[0.14]"
+                    style={{ background: `linear-gradient(92deg, ${meta.color}4d, ${meta.color}14)` }}
                   >
                     <span className="text-sm font-semibold text-white">{meta.name}</span>
                     <button
@@ -179,7 +180,7 @@ export default function OrbField({ people, onPersonClick }: Props) {
                   <div className="overflow-y-auto p-2 space-y-1.5" style={{ maxHeight: listMaxH }}>
                     {id === 'contacts'
                       ? <ContactList people={people} onPersonClick={onPersonClick} />
-                      : <SignalList signals={signalsFor(id)} color={meta.color} />}
+                      : <SignalList signals={signalsFor(id)} lit={meta.lit} />}
                   </div>
                 </motion.div>
               )}
@@ -195,14 +196,21 @@ export default function OrbField({ people, onPersonClick }: Props) {
   )
 }
 
-function SignalList({ signals, color }: { signals: Signal[]; color: string }) {
+function SignalList({ signals, lit }: { signals: Signal[]; lit: string }) {
   if (!signals.length) {
     return <p className="px-2 py-6 text-center text-xs text-white/30">Nothing new here.</p>
   }
   return (
     <>
       {signals.map(s => (
-        <div key={s.id} className="flex gap-2.5 p-2 rounded-xl bg-white/[0.04]">
+        <div
+          key={s.id}
+          className="sheen relative flex gap-2.5 p-2.5 rounded-2xl border border-white/[0.13]"
+          style={{
+            background: 'linear-gradient(150deg, rgba(255,255,255,.12), rgba(255,255,255,.04))',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,.24)',
+          }}
+        >
           <img src={avatar(s.author)} alt="" className="w-9 h-9 rounded-full shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-[13px] font-medium text-white leading-snug truncate">{s.title}</p>
@@ -210,8 +218,8 @@ function SignalList({ signals, color }: { signals: Signal[]; color: string }) {
             {/* Platform colour signals "live"; a plain timestamp must stay muted,
                 otherwise an ordinary YouTube upload reads as an alert. */}
             <p
-              className="text-[11px] mt-0.5 flex items-center gap-1"
-              style={{ color: s.live ? color : 'rgba(255,255,255,0.4)' }}
+              className="text-[11px] mt-0.5 flex items-center gap-1 font-medium"
+              style={{ color: s.live ? lit : 'rgba(255,255,255,0.46)' }}
             >
               {s.live && <Radio size={10} className="animate-pulse" />}
               {s.live && s.viewers ? `${s.viewers.toLocaleString()} watching` : s.when}
@@ -233,17 +241,25 @@ function ContactList({ people, onPersonClick }: { people: Person[]; onPersonClic
           <button
             key={p.id}
             onClick={() => onPersonClick(p)}
-            className="w-full flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] transition-colors text-left"
+            className="sheen relative w-full flex items-center gap-2.5 p-2.5 rounded-2xl border border-white/[0.13] text-left transition-transform active:scale-[.98]"
+            style={{
+              background: 'linear-gradient(150deg, rgba(255,255,255,.12), rgba(255,255,255,.04))',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,.24)',
+            }}
           >
             <img
               src={avatar(p.name)}
               alt=""
               className="w-9 h-9 rounded-full shrink-0"
-              style={{ boxShadow: over ? '0 0 0 2px #ef4444' : '0 0 0 2px #10b981' }}
+              style={{
+                boxShadow: over
+                  ? '0 0 0 2px var(--overdue), 0 0 14px rgba(255,93,115,.7)'
+                  : '0 0 0 2px var(--current), 0 0 14px rgba(46,230,168,.6)',
+              }}
             />
             <div className="min-w-0 flex-1">
               <p className="text-[13px] font-medium text-white truncate">{p.name}</p>
-              <p className={`text-[11px] truncate ${over ? 'text-red-400' : 'text-white/45'}`}>
+              <p className="text-[11px] truncate" style={{ color: over ? 'var(--overdue)' : 'rgba(255,255,255,.46)' }}>
                 {agoLabel(p.daysSince)}{over ? ' · overdue' : ''}
               </p>
             </div>

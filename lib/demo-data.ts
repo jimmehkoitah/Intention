@@ -11,31 +11,34 @@ export type Platform = 'youtube' | 'github' | 'twitch' | 'discord' | 'strava' | 
 export interface PlatformMeta {
   id: Platform
   name: string
+  /** Base hue. */
   color: string
+  /** Highlight tone, used for specular sheen and live accents. */
+  lit: string
   glow: string
   connected: boolean
 }
 
 export const PLATFORM_META: Record<Platform, PlatformMeta> = {
-  contacts: { id: 'contacts', name: 'People', color: '#10b981', glow: 'rgba(16,185,129,0.55)', connected: true },
-  youtube: { id: 'youtube', name: 'YouTube', color: '#ff0000', glow: 'rgba(255,0,0,0.5)', connected: true },
-  twitch: { id: 'twitch', name: 'Twitch', color: '#9146ff', glow: 'rgba(145,70,255,0.55)', connected: true },
-  github: { id: 'github', name: 'GitHub', color: '#e6e6e6', glow: 'rgba(255,255,255,0.35)', connected: true },
-  strava: { id: 'strava', name: 'Strava', color: '#fc4c02', glow: 'rgba(252,76,2,0.5)', connected: true },
-  discord: { id: 'discord', name: 'Discord', color: '#5865f2', glow: 'rgba(88,101,242,0.5)', connected: true },
+  contacts: { id: 'contacts', name: 'People', color: '#10b981', lit: '#5eead4', glow: 'rgba(16,185,129,0.62)', connected: true },
+  youtube: { id: 'youtube', name: 'YouTube', color: '#ff2d3f', lit: '#ff8a95', glow: 'rgba(255,45,63,0.6)', connected: true },
+  twitch: { id: 'twitch', name: 'Twitch', color: '#a855f7', lit: '#d8b4fe', glow: 'rgba(168,85,247,0.62)', connected: true },
+  github: { id: 'github', name: 'GitHub', color: '#2a2a3a', lit: '#8f8fb0', glow: 'rgba(143,143,176,0.45)', connected: true },
+  strava: { id: 'strava', name: 'Strava', color: '#ff6a2b', lit: '#ffb088', glow: 'rgba(255,106,43,0.6)', connected: true },
+  discord: { id: 'discord', name: 'Discord', color: '#6b7cff', lit: '#a5b4fc', glow: 'rgba(107,124,255,0.6)', connected: true },
 }
 
 /* ---------------------------------------------------------------- avatars -- */
 
 const AVATAR_GRADIENTS = [
-  ['#f472b6', '#a855f7'],
-  ['#38bdf8', '#6366f1'],
-  ['#34d399', '#0ea5e9'],
-  ['#fbbf24', '#f97316'],
-  ['#a3e635', '#10b981'],
-  ['#c084fc', '#6366f1'],
-  ['#fb7185', '#f43f5e'],
-  ['#2dd4bf', '#3b82f6'],
+  ['#f0abfc', '#a855f7'],
+  ['#67e8f9', '#6366f1'],
+  ['#6ee7b7', '#22d3ee'],
+  ['#fde047', '#fb923c'],
+  ['#bef264', '#2ee6a8'],
+  ['#d8b4fe', '#818cf8'],
+  ['#fda4af', '#f43f5e'],
+  ['#5eead4', '#3b82f6'],
 ]
 
 function hash(seed: string) {
@@ -58,8 +61,12 @@ export function avatar(name: string): string {
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">` +
     `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
     `<stop offset="0%" stop-color="${a}"/><stop offset="100%" stop-color="${b}"/>` +
-    `</linearGradient></defs>` +
+    `</linearGradient>` +
+    `<radialGradient id="s" cx=".33" cy=".26" r=".5">` +
+    `<stop offset="0%" stop-color="#fff" stop-opacity=".55"/>` +
+    `<stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>` +
     `<rect width="100" height="100" rx="50" fill="url(#g)"/>` +
+    `<rect width="100" height="100" rx="50" fill="url(#s)"/>` +
     `<text x="50" y="50" text-anchor="middle" dominant-baseline="central" ` +
     `font-family="system-ui,-apple-system,sans-serif" font-size="38" font-weight="600" ` +
     `fill="rgba(255,255,255,0.95)">${initials(name)}</text></svg>`
@@ -67,19 +74,20 @@ export function avatar(name: string): string {
 }
 
 /** Deterministic gradient "thumbnail" for a piece of content. */
-export function thumbnail(seed: string, tint: string): string {
+export function thumbnail(seed: string, tint: string, lit: string): string {
   const h = hash(seed)
   const angle = h % 360
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">` +
     `<defs><linearGradient id="g" gradientTransform="rotate(${angle} 0.5 0.5)">` +
-    `<stop offset="0%" stop-color="${tint}" stop-opacity="0.85"/>` +
-    `<stop offset="100%" stop-color="#0a0a0f" stop-opacity="0.95"/>` +
+    `<stop offset="0%" stop-color="${lit}" stop-opacity="0.62"/>` +
+    `<stop offset="52%" stop-color="${tint}" stop-opacity="0.55"/>` +
+    `<stop offset="100%" stop-color="#0b0818" stop-opacity="0.96"/>` +
     `</linearGradient></defs>` +
-    `<rect width="320" height="180" fill="#12121a"/>` +
+    `<rect width="320" height="180" fill="#0c0a1c"/>` +
     `<rect width="320" height="180" fill="url(#g)"/>` +
-    `<circle cx="${40 + (h % 240)}" cy="${30 + (h % 120)}" r="${50 + (h % 60)}" ` +
-    `fill="#ffffff" opacity="0.06"/>` +
+    `<circle cx="${40 + (h % 240)}" cy="${26 + (h % 120)}" r="${46 + (h % 60)}" fill="#fff" opacity="0.12"/>` +
+    `<circle cx="${250 - (h % 180)}" cy="${150 - (h % 90)}" r="${30 + (h % 40)}" fill="#fff" opacity="0.07"/>` +
     `</svg>`
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }

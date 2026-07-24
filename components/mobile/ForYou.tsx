@@ -51,7 +51,7 @@ export default function ForYou({ people, onPersonClick }: Props) {
       <Section
         title="Live now"
         subtitle="From people you follow"
-        icon={<span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />}
+        icon={<span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: 'var(--overdue)', boxShadow: '0 0 12px var(--overdue)' }} />}
       >
         {live.map(s => <SignalCard key={s.id} signal={s} />)}
       </Section>
@@ -72,10 +72,10 @@ function Section({
   return (
     <section className="mt-5 first:mt-3">
       <div className="px-4">
-        <h2 className="flex items-center gap-2 text-[17px] font-semibold text-white">
+        <h2 className="flex items-center gap-2 text-[17px] font-bold tracking-[-0.01em] text-white">
           {icon}{title}
         </h2>
-        <p className="text-[12px] text-white/40 mt-0.5">{subtitle}</p>
+        <p className="text-[12px] text-white/[0.46] mt-[3px]">{subtitle}</p>
       </div>
       <div className="mt-2.5 flex gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory no-scrollbar">
         {children}
@@ -91,23 +91,26 @@ function ReconnectCard({ person, onClick }: { person: Person; onClick: () => voi
     <motion.button
       whileTap={{ scale: 0.96 }}
       onClick={onClick}
-      className="snap-start shrink-0 w-[132px] p-3 rounded-2xl border text-center"
-      style={{
-        background: over ? 'rgba(239,68,68,0.10)' : 'rgba(255,255,255,0.04)',
-        borderColor: over ? 'rgba(239,68,68,0.45)' : 'rgba(255,255,255,0.08)',
-      }}
+      className={`snap-start shrink-0 w-[134px] p-3.5 rounded-[20px] text-center glass holo sheen${over ? ' od' : ''}`}
+      style={over ? {
+        boxShadow: 'var(--glass-lip), var(--glass-drop), 0 0 28px rgba(255,93,115,.34)',
+      } : undefined}
     >
       <img
         src={avatar(person.name)}
         alt=""
         className="w-14 h-14 rounded-full mx-auto"
-        style={{ boxShadow: `0 0 0 2px ${over ? '#ef4444' : '#10b981'}` }}
+        style={{
+          boxShadow: over
+            ? '0 0 0 2px var(--overdue), 0 0 20px rgba(255,93,115,.75)'
+            : '0 0 0 2px var(--current), 0 0 20px rgba(46,230,168,.6)',
+        }}
       />
-      <p className="mt-2 text-[14px] font-semibold text-white truncate">{person.name}</p>
-      <p className={`text-[11px] leading-tight ${over ? 'text-red-400' : 'text-white/45'}`}>
+      <p className="mt-2.5 text-[14px] font-semibold text-white truncate">{person.name}</p>
+      <p className="text-[11px] leading-tight" style={{ color: over ? 'var(--overdue)' : 'rgba(255,255,255,.46)' }}>
         {agoLabel(person.daysSince)}
       </p>
-      {over && <p className="text-[11px] text-red-400 font-medium">Overdue</p>}
+      {over && <p className="text-[11px] font-bold" style={{ color: 'var(--overdue)' }}>Overdue</p>}
     </motion.button>
   )
 }
@@ -123,17 +126,18 @@ function MilestoneCard({
     <motion.button
       whileTap={{ scale: 0.97 }}
       onClick={() => person && onPersonClick(person)}
-      className="snap-start shrink-0 w-[280px] rounded-2xl border border-amber-400/30 bg-amber-400/[0.07] overflow-hidden text-left"
+      className="snap-start shrink-0 w-[290px] rounded-[20px] overflow-hidden text-left glass holo sheen milestone-rim"
+      style={{ boxShadow: 'var(--glass-lip), var(--glass-drop), 0 0 34px rgba(255,200,107,.3)' }}
     >
       <div className="flex items-center gap-3 p-3">
         <img
           src={avatar(signal.author)}
           alt=""
           className="w-12 h-12 rounded-full"
-          style={{ boxShadow: `0 0 0 2px ${meta.color}` }}
+          style={{ boxShadow: '0 0 0 2px var(--milestone), 0 0 22px rgba(255,200,107,.75)' }}
         />
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-400">
+          <p className="text-[11px] font-bold uppercase tracking-[0.07em]" style={{ color: 'var(--milestone)' }}>
             {signal.author.split(' ')[0]}&rsquo;s first marathon
           </p>
           <p className="text-[14px] font-semibold text-white truncate">{signal.title}</p>
@@ -141,7 +145,7 @@ function MilestoneCard({
         </div>
       </div>
       <div className="px-3 pb-3">
-        <span className="inline-block text-[12px] font-medium text-amber-300">
+        <span className="inline-block text-[12px] font-bold" style={{ color: 'var(--milestone)' }}>
           Say something →
         </span>
       </div>
@@ -153,8 +157,7 @@ function PresenceCard({ signal }: { signal: Signal }) {
   const meta = PLATFORM_META[signal.platform]
   return (
     <div
-      className="snap-start shrink-0 w-[240px] p-3 rounded-2xl border"
-      style={{ borderColor: `${meta.color}44`, background: `${meta.color}14` }}
+      className="snap-start shrink-0 w-[246px] p-3.5 rounded-[20px] glass holo presence-rim"
     >
       <p className="text-[14px] font-semibold text-white">{signal.title}</p>
       <p className="text-[12px] text-white/50 mt-0.5">{signal.subtitle}</p>
@@ -164,7 +167,8 @@ function PresenceCard({ signal }: { signal: Signal }) {
             key={n}
             src={avatar(n)}
             alt=""
-            className="w-7 h-7 rounded-full border-2 border-[#12121a]"
+            className="w-7 h-7 rounded-full border-2"
+            style={{ borderColor: 'rgba(20,16,40,.9)' }}
           />
         ))}
       </div>
@@ -177,18 +181,27 @@ function SignalCard({ signal }: { signal: Signal }) {
   return (
     <motion.div
       whileTap={{ scale: 0.97 }}
-      className="snap-start shrink-0 w-[240px] rounded-2xl border border-white/10 bg-white/[0.04] overflow-hidden"
+      className={`snap-start shrink-0 w-[238px] rounded-[20px] overflow-hidden glass holo${signal.live ? ' holo-live' : ''}`}
     >
       <div className="relative">
-        <img src={thumbnail(signal.id, meta.color)} alt="" className="w-full aspect-video object-cover" />
+        <img src={thumbnail(signal.id, meta.color, meta.lit)} alt="" className="w-full aspect-video object-cover" />
         {signal.live && (
-          <span className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-600 text-[10px] font-bold text-white">
+          <span
+            className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold tracking-[0.05em] text-white"
+            style={{
+              background: 'linear-gradient(180deg, #ff7a8a, #ff2d4e)',
+              boxShadow: '0 4px 14px rgba(255,45,78,.6)',
+            }}
+          >
             <Radio size={9} /> LIVE
           </span>
         )}
         <span
-          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-          style={{ background: meta.color }}
+          className="absolute top-2 right-2 z-10 w-[25px] h-[25px] rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+          style={{
+            background: `linear-gradient(160deg, ${meta.lit}, ${meta.color})`,
+            boxShadow: '0 3px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.5)',
+          }}
         >
           {meta.name[0]}
         </span>
