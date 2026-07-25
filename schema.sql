@@ -1,5 +1,11 @@
--- UpKeep Database Schema
--- Run this in your Supabase SQL Editor to create all necessary tables
+-- Intention — database schema
+--
+-- Safe to run more than once. Tables and triggers already guard themselves with
+-- IF NOT EXISTS / DROP ... IF EXISTS; policies now do too, because Postgres has
+-- no CREATE POLICY IF NOT EXISTS and a partial run would otherwise leave the
+-- file impossible to re-apply.
+--
+-- Run this in your Supabase SQL Editor.
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -123,42 +129,53 @@ ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
 -- RLS Policies: Users can only access their own data
 
 -- Profiles policies
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile" ON public.profiles
   FOR SELECT USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile" ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
 CREATE POLICY "Users can insert own profile" ON public.profiles
   FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- Connections policies
+DROP POLICY IF EXISTS "Users can manage own connections" ON public.connections;
 CREATE POLICY "Users can manage own connections" ON public.connections
   FOR ALL USING (auth.uid() = user_id);
 
 -- Contacts policies
+DROP POLICY IF EXISTS "Users can manage own contacts" ON public.contacts;
 CREATE POLICY "Users can manage own contacts" ON public.contacts
   FOR ALL USING (auth.uid() = user_id);
 
 -- Contact identities policies
+DROP POLICY IF EXISTS "Users can manage own contact identities" ON public.contact_identities;
 CREATE POLICY "Users can manage own contact identities" ON public.contact_identities
   FOR ALL USING (
     contact_id IN (SELECT id FROM public.contacts WHERE user_id = auth.uid())
   );
 
 -- Contact interactions policies
+DROP POLICY IF EXISTS "Users can manage own contact interactions" ON public.contact_interactions;
 CREATE POLICY "Users can manage own contact interactions" ON public.contact_interactions
   FOR ALL USING (
     contact_id IN (SELECT id FROM public.contacts WHERE user_id = auth.uid())
   );
 
 -- Signals policies
+DROP POLICY IF EXISTS "Users can view own signals" ON public.signals;
 CREATE POLICY "Users can view own signals" ON public.signals
   FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own signals" ON public.signals;
 CREATE POLICY "Users can insert own signals" ON public.signals
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own signals" ON public.signals;
 CREATE POLICY "Users can delete own signals" ON public.signals
   FOR DELETE USING (auth.uid() = user_id);
 
 -- User preferences policies
+DROP POLICY IF EXISTS "Users can manage own preferences" ON public.user_preferences;
 CREATE POLICY "Users can manage own preferences" ON public.user_preferences
   FOR ALL USING (auth.uid() = user_id);
 
