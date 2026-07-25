@@ -1,34 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 
+export const dynamic = 'force-dynamic'
+
+/**
+ * Supabase Auth callback: exchanges the PKCE code for a session and sets the
+ * session cookies. Used by both magic links and Google sign-in.
+ */
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams
+  const { searchParams, origin } = request.nextUrl
   const code = searchParams.get('code')
-  const state = searchParams.get('state')
-  const error = searchParams.get('error')
+  const next = searchParams.get('next') ?? '/'
+  const error = searchParams.get('error_description') ?? searchParams.get('error')
 
   if (error) {
-    console.error('OAuth error:', error)
-    return NextResponse.redirect(new URL('/integrations?error=' + error, request.url))
+    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error)}`, origin))
   }
 
   if (!code) {
-    return NextResponse.redirect(new URL('/integrations?error=no_code', request.url))
+    return NextResponse.redirect(new URL('/login?error=No+sign-in+code+was+returned', origin))
   }
 
   try {
-    // Exchange code for session
-    const { data, error: authError } = await getSupabase().auth.exchangeCodeForSession(code)
-
-    if (authError) {
-      console.error('Auth error:', authError)
-      return NextResponse.redirect(new URL('/integrations?error=auth_failed', request.url))
+    const supabase = createClient()
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+    if (exchangeError) {
+      return NextResponse.redirect(
+        new URL(`/login?error=${encodeURIComponent(exchangeError.message)}`, origin)
+      )
     }
-
-    // Redirect to home on success
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL(next, origin))
   } catch (err) {
-    console.error('Callback error:', err)
-    return NextResponse.redirect(new URL('/integrations?error=unknown', request.url))
+    const message = err instanceof Error ? err.message : 'Sign-in failed'
+    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(message)}`, origin))
   }
 }

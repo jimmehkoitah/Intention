@@ -1,68 +1,61 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import * as youtube from '@/lib/platforms/youtube'
+import { NextResponse } from 'next/server'
+import { getUser, isConfigured } from '@/lib/supabase/server'
+import { getConnection, isUsable } from '@/lib/connections'
 import * as github from '@/lib/platforms/github'
-import * as twitch from '@/lib/platforms/twitch'
 
-export async function GET(request: NextRequest) {
+export const dynamic = 'force-dynamic'
+
+/**
+ * Live signals from the caller's connected platforms.
+ *
+ * Always returns 200 with a `status` the UI can act on, rather than an error
+ * code — "you are signed out" and "you have not connected anything yet" are
+ * normal states of the product, not failures.
+ */
+export async function GET() {
+  if (!isConfigured()) {
+    return NextResponse.json({ status: 'unconfigured', signals: [], platforms: [] })
+  }
+
+  const user = await getUser()
+  if (!user) {
+    return NextResponse.json({ status: 'signed_out', signals: [], platforms: [] })
+  }
+
+  const connection = await getConnection('github')
+  if (!isUsable(connection)) {
+    return NextResponse.json({ status: 'no_connections', signals: [], platforms: [] })
+  }
+
+  const username = connection.platform_username
+  if (!username) {
+    return NextResponse.json({
+      status: 'error',
+      error: 'The GitHub connection is missing a username. Reconnect GitHub.',
+      signals: [],
+      platforms: [],
+    })
+  }
+
   try {
-    const cookieStore = cookies()
-    const signals: any[] = []
+    const signals = await github.fetchSignals(connection.access_token!, username)
 
-    // Check YouTube connection
-    const youtubeTokens = cookieStore.get('youtube_tokens')
-    if (youtubeTokens) {
-      try {
-        const tokens = JSON.parse(youtubeTokens.value)
-
-        // Check if token is expired
-        if (tokens.expires_at > Date.now()) {
-          // Get subscriptions
-          const subscriptions = await youtube.getSubscriptions(tokens.access_token)
-          const channelIds = subscriptions.map(s => s.snippet.resourceId.channelId)
-
-          // Get videos from subscriptions
-          const videos = await youtube.getSubscriptionVideos(tokens.access_token, channelIds.slice(0, 10))
-
-          // Transform to signals
-          for (const video of videos) {
-            signals.push(youtube.transformToSignal(video))
-          }
-
-          // Get live streams
-          const liveStreams = await youtube.getLiveStreams(tokens.access_token)
-          for (const stream of liveStreams) {
-            signals.push(youtube.transformToSignal(stream))
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching YouTube signals:', err)
-      }
-    }
-
-    // Check GitHub connection (similar pattern)
-    const githubTokens = cookieStore.get('github_tokens')
-    if (githubTokens) {
-      try {
-        const tokens = JSON.parse(githubTokens.value)
-        const events = await github.getFollowingActivity(tokens.access_token)
-
-        for (const event of events) {
-          signals.push(github.transformToSignal(event))
-        }
-      } catch (err) {
-        console.error('Error fetching GitHub signals:', err)
-      }
-    }
-
-    // Sort by date
-    signals.sort((a, b) =>
-      new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
-    )
-
-    return NextResponse.json({ signals })
+    return NextResponse.json({
+      status: 'ok',
+      platforms: ['github'],
+      account: username,
+      signals,
+    })
   } catch (err) {
-    console.error('Error in signals API:', err)
-    return NextResponse.json({ error: 'Failed to fetch signals' }, { status: 500 })
+    // Surface why it failed. A silent empty feed is indistinguishable from
+    // "your friends did nothing", which would be the wrong thing to conclude.
+    const status = err instanceof github.GitHubError ? err.status : 500
+    const message = err instanceof Error ? err.message : 'Could not reach GitHub'
+    return NextResponse.json({
+      status: status === 401 ? 'reauth_required' : 'error',
+      error: message,
+      signals: [],
+      platforms: [],
+    })
   }
 }

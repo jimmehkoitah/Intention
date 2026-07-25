@@ -7,7 +7,8 @@ import OrbField from '@/components/mobile/OrbField'
 import ForYou from '@/components/mobile/ForYou'
 import PersonSheet from '@/components/mobile/PersonSheet'
 import Aurora from '@/components/mobile/Aurora'
-import { PEOPLE, Person, isOverdue } from '@/lib/demo-data'
+import { PEOPLE, SIGNALS, Person, isOverdue } from '@/lib/demo-data'
+import { useSignals } from '@/lib/use-signals'
 
 type Tab = 'discovery' | 'foryou'
 
@@ -16,6 +17,12 @@ export default function Home() {
   const [people, setPeople] = useState<Person[]>(PEOPLE)
   const [selected, setSelected] = useState<Person | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const feed = useSignals()
+
+  // Live data replaces the sample set once a platform is connected. Until then
+  // the demo stands in, so the app is never an empty shell.
+  const isLive = feed.status === 'ok' && feed.signals.length > 0
+  const signals = isLive ? feed.signals : SIGNALS
 
   // Logging a contact resets the clock — the one piece of state that makes the
   // demo feel alive rather than static.
@@ -112,10 +119,12 @@ export default function Home() {
           className="relative z-10 flex-1 flex flex-col min-h-0"
         >
           {tab === 'discovery'
-            ? <OrbField people={people} onPersonClick={setSelected} />
-            : <ForYou people={people} onPersonClick={setSelected} />}
+            ? <OrbField people={people} signals={signals} onPersonClick={setSelected} />
+            : <ForYou people={people} signals={signals} onPersonClick={setSelected} />}
         </motion.div>
       </AnimatePresence>
+
+      <FeedStatusStrip status={feed.status} account={feed.account} error={feed.error} live={isLive} />
 
       <PersonSheet person={selected} onClose={() => setSelected(null)} onLogContact={logContact} />
 
@@ -136,6 +145,55 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+/**
+ * States the strip. Never claims the feed is real when it isn't — an empty or
+ * sample feed presented as live would be worse than saying nothing.
+ */
+function FeedStatusStrip({
+  status, account, error, live,
+}: {
+  status: string; account?: string; error?: string; live: boolean
+}) {
+  if (status === 'loading') return null
+
+  let text: React.ReactNode = null
+  let tone: 'live' | 'muted' | 'bad' = 'muted'
+
+  if (live) {
+    text = <>Live from GitHub{account ? <> · @{account}</> : null}</>
+    tone = 'live'
+  } else if (status === 'signed_out' || status === 'unconfigured') {
+    text = <>Sample data · <a href="/login" className="underline">sign in</a> to see your own</>
+  } else if (status === 'no_connections') {
+    text = <>Sample data · <a href="/integrations" className="underline">connect GitHub</a></>
+  } else if (status === 'reauth_required') {
+    text = <><a href="/integrations" className="underline">Reconnect GitHub</a> — the token expired</>
+    tone = 'bad'
+  } else if (status === 'error') {
+    text = <>Couldn&rsquo;t load your feed: {error ?? 'unknown error'}</>
+    tone = 'bad'
+  } else if (status === 'ok') {
+    text = <>GitHub connected, but your network has been quiet · showing sample data</>
+  }
+
+  if (!text) return null
+
+  const colour =
+    tone === 'live' ? 'var(--current)' : tone === 'bad' ? 'var(--overdue)' : 'rgba(255,255,255,.5)'
+
+  return (
+    <div className="relative z-10 shrink-0 px-4 pb-[max(8px,env(safe-area-inset-bottom))]">
+      <p className="flex items-center justify-center gap-1.5 text-[11.5px]" style={{ color: colour }}>
+        <span
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ background: colour, boxShadow: tone === 'live' ? `0 0 8px ${colour}` : undefined }}
+        />
+        {text}
+      </p>
     </div>
   )
 }

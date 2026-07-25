@@ -154,6 +154,10 @@ export interface Signal {
   title: string
   subtitle: string
   author: string
+  /** Real avatar from the provider. Falls back to a generated one when absent. */
+  avatarUrl?: string
+  /** Link out to the provider. */
+  url?: string
   /** Set when this signal came from someone in PEOPLE. */
   personId?: string
   live?: boolean
@@ -161,6 +165,8 @@ export interface Signal {
   when: string
   /** Marks a genuinely notable life event, not routine activity. */
   milestone?: boolean
+  /** Short label above a milestone, e.g. "Bo's first marathon". */
+  eyebrow?: string
 }
 
 export const SIGNALS: Signal[] = [
@@ -169,6 +175,7 @@ export const SIGNALS: Signal[] = [
     id: 's1', platform: 'strava', kind: 'run', personId: 'p4',
     title: 'Chicago Marathon — 26.2 mi', subtitle: 'First marathon · 4:12:38',
     author: 'Bo Kim', when: '3h ago', milestone: true,
+    eyebrow: 'Bo\u2019s first marathon',
   },
   {
     id: 's2', platform: 'twitch', kind: 'stream',

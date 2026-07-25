@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Youtube, Github, Twitch, MessageCircle, Activity, Phone, X, Radio } from 'lucide-react'
 import {
   Platform, PLATFORM_META, Person, Signal,
-  signalsFor, avatar, agoLabel, isOverdue,
+  avatar, agoLabel, isOverdue,
 } from '@/lib/demo-data'
 
 const ICONS: Record<Platform, typeof Youtube> = {
@@ -44,10 +44,14 @@ function clamp(v: number, lo: number, hi: number) {
 
 interface Props {
   people: Person[]
+  signals: Signal[]
   onPersonClick: (p: Person) => void
 }
 
-export default function OrbField({ people, onPersonClick }: Props) {
+export default function OrbField({ people, signals, onPersonClick }: Props) {
+  const forPlatform = (id: Platform) =>
+    id === 'contacts' ? [] : signals.filter(s => s.platform === id)
+
   const fieldRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
   const [drag, setDrag] = useState<Record<string, { dx: number; dy: number }>>({})
@@ -81,7 +85,8 @@ export default function OrbField({ people, onPersonClick }: Props) {
         const d = drag[id] ?? { dx: 0, dy: 0 }
 
         const isOpen = expanded.includes(id)
-        const live = signalsFor(id).filter(s => s.live).length
+        const platformSignals = forPlatform(id)
+        const live = platformSignals.filter(s => s.live).length
         const badge = id === 'contacts' ? overdue.length : live
 
         // Current pixel centre, used only for panel placement.
@@ -180,7 +185,7 @@ export default function OrbField({ people, onPersonClick }: Props) {
                   <div className="overflow-y-auto p-2 space-y-1.5" style={{ maxHeight: listMaxH }}>
                     {id === 'contacts'
                       ? <ContactList people={people} onPersonClick={onPersonClick} />
-                      : <SignalList signals={signalsFor(id)} lit={meta.lit} />}
+                      : <SignalList signals={platformSignals} lit={meta.lit} />}
                   </div>
                 </motion.div>
               )}
@@ -211,7 +216,7 @@ function SignalList({ signals, lit }: { signals: Signal[]; lit: string }) {
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,.24)',
           }}
         >
-          <img src={avatar(s.author)} alt="" className="w-9 h-9 rounded-full shrink-0" />
+          <img src={s.avatarUrl ?? avatar(s.author)} alt="" className="w-9 h-9 rounded-full shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-[13px] font-medium text-white leading-snug truncate">{s.title}</p>
             <p className="text-[11px] text-white/45 truncate">{s.author}</p>

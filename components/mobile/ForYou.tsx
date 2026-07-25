@@ -3,21 +3,22 @@
 import { motion } from 'framer-motion'
 import { Radio, Trophy, Users } from 'lucide-react'
 import {
-  Person, Signal, SIGNALS, PLATFORM_META,
+  Person, Signal, PLATFORM_META,
   avatar, thumbnail, agoLabel, isOverdue, pressure, personById,
 } from '@/lib/demo-data'
 
 interface Props {
   people: Person[]
+  signals: Signal[]
   onPersonClick: (p: Person) => void
 }
 
-export default function ForYou({ people, onPersonClick }: Props) {
+export default function ForYou({ people, signals, onPersonClick }: Props) {
   const reconnect = [...people].sort((a, b) => pressure(b) - pressure(a)).slice(0, 6)
-  const milestones = SIGNALS.filter(s => s.milestone)
-  const live = SIGNALS.filter(s => s.live)
-  const missed = SIGNALS.filter(s => !s.live && !s.milestone && s.platform !== 'discord')
-  const presence = SIGNALS.filter(s => s.platform === 'discord')
+  const milestones = signals.filter(s => s.milestone)
+  const live = signals.filter(s => s.live)
+  const presence = signals.filter(s => s.kind === 'presence')
+  const missed = signals.filter(s => !s.live && !s.milestone && s.kind !== 'presence')
 
   return (
     <div className="flex-1 overflow-y-auto pb-6">
@@ -48,17 +49,21 @@ export default function ForYou({ people, onPersonClick }: Props) {
         </Section>
       )}
 
-      <Section
-        title="Live now"
-        subtitle="From people you follow"
-        icon={<span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: 'var(--overdue)', boxShadow: '0 0 12px var(--overdue)' }} />}
-      >
-        {live.map(s => <SignalCard key={s.id} signal={s} />)}
-      </Section>
+      {live.length > 0 && (
+        <Section
+          title="Live now"
+          subtitle="From people you follow"
+          icon={<span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: 'var(--overdue)', boxShadow: '0 0 12px var(--overdue)' }} />}
+        >
+          {live.map(s => <SignalCard key={s.id} signal={s} />)}
+        </Section>
+      )}
 
-      <Section title="You might have missed" subtitle="Since you last looked">
-        {missed.map(s => <SignalCard key={s.id} signal={s} />)}
-      </Section>
+      {missed.length > 0 && (
+        <Section title="You might have missed" subtitle="Since you last looked">
+          {missed.map(s => <SignalCard key={s.id} signal={s} />)}
+        </Section>
+      )}
     </div>
   )
 }
@@ -131,14 +136,14 @@ function MilestoneCard({
     >
       <div className="flex items-center gap-3 p-3">
         <img
-          src={avatar(signal.author)}
+          src={signal.avatarUrl ?? avatar(signal.author)}
           alt=""
           className="w-12 h-12 rounded-full"
           style={{ boxShadow: '0 0 0 2px var(--milestone), 0 0 22px rgba(255,200,107,.75)' }}
         />
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.07em]" style={{ color: 'var(--milestone)' }}>
-            {signal.author.split(' ')[0]}&rsquo;s first marathon
+            {signal.eyebrow ?? signal.author}
           </p>
           <p className="text-[14px] font-semibold text-white truncate">{signal.title}</p>
           <p className="text-[12px] text-white/50 truncate">{signal.subtitle}</p>
@@ -209,7 +214,7 @@ function SignalCard({ signal }: { signal: Signal }) {
       <div className="p-2.5">
         <p className="text-[13px] font-medium text-white leading-snug line-clamp-2">{signal.title}</p>
         <div className="flex items-center gap-1.5 mt-1.5">
-          <img src={avatar(signal.author)} alt="" className="w-5 h-5 rounded-full" />
+          <img src={signal.avatarUrl ?? avatar(signal.author)} alt="" className="w-5 h-5 rounded-full" />
           <span className="text-[11px] text-white/45 truncate flex-1">{signal.author}</span>
           <span className="text-[11px] text-white/35 shrink-0">
             {signal.live && signal.viewers ? `${(signal.viewers / 1000).toFixed(1)}K` : signal.when}
